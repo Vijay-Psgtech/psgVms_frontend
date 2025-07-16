@@ -35,11 +35,14 @@ export default function Login() {
             <div className="flex w-full max-w-4xl bg-white rounded-2xl shadow-lg overflow-hidden">
                 {/* Left Panel - Branding */}
                 <div className="hidden md:flex flex-col items-center justify-center w-1/2 bg-white shadow-2xl p-8 text-center">
-                    <img src="/Logo2.png" alt="Logo" className="h-25" />
-                    <h2 className="text-2xl font-bold text-blue-800">Welcome Admin!</h2>
-                    <p className="text-sm font-semibold text-gray-600 mt-4">
-                        Sign in to check visitor status and stay updated.
-                    </p>
+                    <div className="flex flex-col mb-12">
+                        <img src="/Logo2.png" alt="Logo" className="mx-auto w-26 h-26" />
+                        <h2 className="text-2xl font-bold text-blue-800">Welcome Admin!</h2>
+                        <p className="text-sm font-semibold text-gray-600 mt-4">
+                            Sign in to check visitor status and stay updated.
+                        </p>
+                    </div>
+                    
                 </div>
                 {/* Right Panel - Login Form */}
                 <div className="w-full md:w-1/2 p-8">
