@@ -1,10 +1,18 @@
 import { Outlet } from "react-router-dom";
 import Sidebar from "./Sidebar";
 import Topbar from "./Topbar";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import socket from "../../utils/socket";
+import { toast } from "react-toastify";
 
 const AdminLayout = ({ admin }) => {
     const [sidebarOpen, setSidebarOpen] = useState(false);
+    useEffect(()=>{
+        socket.on('new-visitor', (visitor) => {
+            toast.info(`${visitor.first_name} has registered at the gate.`);
+        });
+        return () => socket.off('new-visitor');
+    },[]);
     return (
         <div className="flex h-screen bg-gray-50 overflow-hidden">
             <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
