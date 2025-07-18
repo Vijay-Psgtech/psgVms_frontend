@@ -1,17 +1,35 @@
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
-import { Home, Users, Bell, LogOut, BarChart } from 'lucide-react';
+import { Home, Users, Bell, LogOut, BarChart, MenuIcon, User2, Settings } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { useState } from 'react';
 
 const menuItems = [
     { label: 'Dashboard', icon: Home, path:"/admin" },
     { label: 'Visitor Lists', icon: Users, path:"/admin/visitors" },
     { label: 'Visitor Analytics', icon: BarChart, path:'/admin/visitors-stats'},
+    // {
+    //     label:'Masters',
+    //     icon: MenuIcon,
+    //     submenu:[
+    //         { label: 'Host', icon: User2, path: '/admin/master/host'},
+    //         { label: 'Visitor Type', icon: Settings, path: '/admin/master/visitor-type'}
+    //     ]
+    // }
 ]
 
 const Sidebar = ({ isOpen, onClose }) => {
     const location = useLocation();
     const navigate = useNavigate();
     const { logout } = useAuth();
+    const [openMenus, setOpenMenus] = useState({});
+
+    const toggleMenu = (label) => {
+        setOpenMenus((prev) => ({
+            ...prev,
+            [label]: !prev[label],
+        }));
+    };
+
     return (
         <div
             className={`fixed md:static top-0 left-0 h-full w-64 bg-white shadow-md z-40 transform transition-transform duration-200 ease-in-out
@@ -23,18 +41,51 @@ const Sidebar = ({ isOpen, onClose }) => {
             </div>
 
             <nav className="p-4 space-y-4">
-                {menuItems.map(({ label, icon: Icon, path })=>{
-                    const active = location.pathname === path;
-                    return(
-                        <NavLink key={label} to={path} className={`flex items-center gap-3 px-4 py-2 rounded-lg transition duration-200
-                        ${active
-                        ? 'bg-blue-100 text-blue-700 font-semibold shadow-inner'
-                        : 'hover:bg-gray-100 text-gray-700'}`}>
-                            <Icon className="w-5 h-5" />
-                            <span>{label}</span>
-                        </NavLink>
-                    )
-                })}
+                {menuItems.map((item, index)=>(
+                    <div key={index}>
+                        {/*Main Menu with or without submenu*/}
+                        {item.submenu ? (
+                            <>
+                                <div 
+                                    onClick={()=> toggleMenu(item.label)}
+                                    className='flex items-center justify-between text-gray-700 cursor-pointer hover:bg-gray-100 px-4 py-2 rounded'
+                                >
+                                    <div className='flex items-center gap-3'>
+                                        <item.icon className='w-5 h-5'/>
+                                        <span>{item.label}</span>
+                                    </div>
+                                    <span>{openMenus[item.label] ? '▲' : '▼'}</span>
+                                </div>
+                                {openMenus[item.label] && (
+                                    <div className='pl-6 mt-1 space-y-1'>
+                                        {item.submenu.map((sub, subIndex)=>(
+                                            <NavLink
+                                                key={subIndex}
+                                                to={sub.path}
+                                                className={`block p-2 rounded hover:bg-gray-100 text-gray-700 ${location.pathname === sub.path ? 'bg-blue-100 text-blue-700 font-semibold shadow-inner' : ''}`}
+                                            >
+                                                <div className='flex items-center gap-3'>
+                                                    <sub.icon className='w-5 h-5' />
+                                                    <span>{sub.label}</span>
+                                                </div>
+                                                
+                                            </NavLink>
+                                        ))}
+                                    </div>
+                                )}
+                            </>
+                        ) : (
+                            <NavLink to={item.path} 
+                                className={`flex items-center gap-3 px-4 py-2 rounded-lg transition duration-200 
+                                    ${location.pathname === item.path ? 'bg-blue-100 text-blue-700 font-semibold shadow-inner' : 'hover:bg-gray-100 text-gray-700'}`}
+                            >
+                                <item.icon className='w-5 h-5'/>
+                                <span>{item.label}</span>
+                            </NavLink>
+                        )
+                        }
+                    </div>
+                ))}
             </nav>
             <div className="px-4 py-3">
                 <button

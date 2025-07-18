@@ -58,7 +58,8 @@ const AdminAnalytics = () => {
                     </div>
                 ))}
             </div>
-            <div className="mt-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <div className="bg-white rounded-lg shadow-md p-6">
                 <h3 className="text-lg font-semibold mb-2">Visitor Status Chart</h3>
                 <ResponsiveContainer width="100%" height={300}>
                     <BarChart data={statusData}>
@@ -69,16 +70,17 @@ const AdminAnalytics = () => {
                     </BarChart>
                 </ResponsiveContainer>
             </div>
-            <div className='mt-8'>
-                <h3>Daily Visitors - {dayjs(selectedMonth).format('MMMM YYYY')}</h3>
+            <div className='bg-white rounded-lg shadow-md p-6'>
+                <h3 className="text-lg font-semibold mb-2">Daily Visitors - {dayjs(selectedMonth).format('MMMM YYYY')}</h3>
                 <ResponsiveContainer width="100%" height={300}>
                     <LineChart data={dailyChartData}>
                         <XAxis dataKey="date" tickFormatter={(d) => dayjs(d).format('D')} />
                         <YAxis allowDecimals={false} />
                         <Tooltip labelFormatter={(d) => dayjs(d).format('DD MMM YYYY')} />
-                        <Line type="monotone" dataKey="count" stroke="#0ea5e9" strokeWidth={2} dot={{ r: 3 }} />
+                        <Line type="monotone" dataKey="count" stroke="#10b981" strokeWidth={2} dot={{ r: 3 }} />
                     </LineChart>
                 </ResponsiveContainer>
+            </div>
             </div>
         </div>
     )
