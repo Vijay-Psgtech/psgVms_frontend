@@ -1,5 +1,5 @@
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
-import { Home, Users, Bell, LogOut, BarChart, MenuIcon, User2, Settings } from 'lucide-react';
+import { Home, Users, LogOut, BarChart, Puzzle, UserCheck, Tags, ChevronDown, ChevronUp, XCircle } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useState } from 'react';
 
@@ -7,14 +7,14 @@ const menuItems = [
     { label: 'Dashboard', icon: Home, path:"/admin" },
     { label: 'Visitor Lists', icon: Users, path:"/admin/visitors" },
     { label: 'Visitor Analytics', icon: BarChart, path:'/admin/visitors-stats'},
-    // {
-    //     label:'Masters',
-    //     icon: MenuIcon,
-    //     submenu:[
-    //         { label: 'Host', icon: User2, path: '/admin/master/host'},
-    //         { label: 'Visitor Type', icon: Settings, path: '/admin/master/visitor-type'}
-    //     ]
-    // }
+    /*{
+        label:'Masters',
+        icon: Puzzle,
+        submenu:[
+            { label: 'Host', icon: UserCheck, path: '/admin/master/host'},
+            { label: 'Visitor Type', icon: Tags, path: '/admin/master/visitor-type'}
+        ]
+    }*/
 ]
 
 const Sidebar = ({ isOpen, onClose }) => {
@@ -37,7 +37,7 @@ const Sidebar = ({ isOpen, onClose }) => {
         >
             <div className="p-4 border-b border-gray-200 flex justify-between items-center">
                 <h2 className="text-xl font-bold text-blue-600">Admin Panel</h2>
-                <button className="md:hidden text-gray-500" onClick={onClose}>✕</button>
+                <button className="md:hidden text-gray-500" onClick={onClose}><XCircle/></button>
             </div>
 
             <nav className="p-4 space-y-4">
@@ -54,7 +54,7 @@ const Sidebar = ({ isOpen, onClose }) => {
                                         <item.icon className='w-5 h-5'/>
                                         <span>{item.label}</span>
                                     </div>
-                                    <span>{openMenus[item.label] ? '▲' : '▼'}</span>
+                                    <span>{openMenus[item.label] ? <ChevronUp/> : <ChevronDown/>}</span>
                                 </div>
                                 {openMenus[item.label] && (
                                     <div className='pl-6 mt-1 space-y-1'>
@@ -62,7 +62,7 @@ const Sidebar = ({ isOpen, onClose }) => {
                                             <NavLink
                                                 key={subIndex}
                                                 to={sub.path}
-                                                className={`block p-2 rounded hover:bg-gray-100 text-gray-700 ${location.pathname === sub.path ? 'bg-blue-100 text-blue-700 font-semibold shadow-inner' : ''}`}
+                                                className={`block border-b-2 border-gray-300 p-2 rounded hover:bg-gray-100 text-gray-700 ${location.pathname === sub.path ? 'bg-blue-100 text-blue-700 font-semibold shadow-inner' : ''}`}
                                             >
                                                 <div className='flex items-center gap-3'>
                                                     <sub.icon className='w-5 h-5' />

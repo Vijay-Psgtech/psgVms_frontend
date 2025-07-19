@@ -1,6 +1,10 @@
 import React,{useState, useEffect} from 'react';
 import axiosInstance from '../../utils/axiosInstance';
-import { BarChart, Bar, LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
+import { 
+    BarChart, Bar, LineChart, Line, 
+    PieChart, Pie, Cell, Legend,
+    XAxis, YAxis, Tooltip, ResponsiveContainer 
+} from 'recharts';
 import dayjs from 'dayjs';
 
 const AdminAnalytics = () => {
@@ -9,12 +13,15 @@ const AdminAnalytics = () => {
         statusCounts: [],
     });
     const [dailyChartData, setDailyChartData] = useState([]);
+    const [data, setData] = useState([]);
     const [selectedMonth, setSelectedMonth] = useState(dayjs().format('YYYY-MM'));
+    const COLORS = ['#8884d8', '#82ca9d', '#ffc658', '#ff7f50', '#a4de6c', '#d0ed57', '#888888'];
  
     useEffect(()=>{
         const fetchStats = async() => {
             const res = await axiosInstance.get(`/api/visitors/visitor-stats?month=${selectedMonth}`);
             setAnalytics(res.data);
+            setData(res.data.purposeStats);
         };
         fetchStats();
     },[selectedMonth]);
@@ -59,16 +66,45 @@ const AdminAnalytics = () => {
                 ))}
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-            <div className="bg-white rounded-lg shadow-md p-6">
-                <h3 className="text-lg font-semibold mb-2">Visitor Status Chart</h3>
-                <ResponsiveContainer width="100%" height={300}>
-                    <BarChart data={statusData}>
-                        <XAxis dataKey="name" />
-                        <YAxis allowDecimals={false} />
-                        <Tooltip />
-                        <Bar dataKey="value" fill="#3b82f6" radius={[6, 6, 0, 0]} />
-                    </BarChart>
-                </ResponsiveContainer>
+                <div className="bg-white rounded-lg shadow-md p-6">
+                    <h3 className="text-lg font-semibold mb-2">Visitor Status Chart - {dayjs(selectedMonth).format('MMMM YYYY')}</h3>
+                    <ResponsiveContainer width="100%" height={300}>
+                        <BarChart data={statusData}>
+                            <XAxis dataKey="name" />
+                            <YAxis allowDecimals={false} />
+                            <Tooltip />
+                            <Bar dataKey="value" fill="#3b82f6" radius={[6, 6, 0, 0]} />
+                        </BarChart>
+                    </ResponsiveContainer>
+                </div>
+                <div className='bg-white rounded-lg shadow-md p-6'>
+                    <h3 className='text-lg font-semibold mb-2'>Visitor Purpose Distribution - {dayjs(selectedMonth).format('MMMM YYYY')}</h3>
+                    {data.length > 0 ? (
+                        <ResponsiveContainer width="100%" height={300}>
+                            <PieChart>
+                                <Pie
+                                    data={data}
+                                    dataKey="count"
+                                    nameKey="purpose"
+                                    cx="50%"
+                                    cy="50%"
+                                    outerRadius={100}
+                                    fill="#8884d8"
+                                    label
+                                >
+                                    {data.map((_,index)=>(
+                                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]}/>
+                                    ))}
+                                </Pie>
+                                <Tooltip />
+                                <Legend layout="horizontal" verticalAlign='bottom' align="center" />
+                            </PieChart>
+                        </ResponsiveContainer>
+                    ) : (
+                        <p className="text-gray-500 text-sm text-center mt-10">No data available for the selected range.</p>
+                    )}
+                    
+                </div>
             </div>
             <div className='bg-white rounded-lg shadow-md p-6'>
                 <h3 className="text-lg font-semibold mb-2">Daily Visitors - {dayjs(selectedMonth).format('MMMM YYYY')}</h3>
@@ -80,7 +116,6 @@ const AdminAnalytics = () => {
                         <Line type="monotone" dataKey="count" stroke="#10b981" strokeWidth={2} dot={{ r: 3 }} />
                     </LineChart>
                 </ResponsiveContainer>
-            </div>
             </div>
         </div>
     )
