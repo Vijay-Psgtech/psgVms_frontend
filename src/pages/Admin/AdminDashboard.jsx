@@ -80,7 +80,7 @@ const AdminDashboard = () => {
                 className="flex flex-col md:flex-row justify-between items-start md:items-center p-4 border-b-4 border-blue-500 rounded-lg shadow-lg hover:bg-blue-50 transition-all"
               >
                 <div className="space-y-1 font-semibold">
-                  <p className="text-sm font-medium text-gray-900">{visitor.first_name} {visitor.last_name || ''}</p>
+                  <p className="text-sm font-medium text-gray-900">{visitor.name}</p>
                   <p className="text-sm text-gray-600">{visitor.email}</p>
                   <p className="text-sm text-gray-500">Purpose: {visitor.purpose}</p>
                   <p className="text-xs text-gray-400">Requested on: {new Date(visitor.createdAt).toLocaleDateString()}</p>

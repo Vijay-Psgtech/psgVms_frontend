@@ -2,14 +2,14 @@ import { Outlet } from "react-router-dom";
 import Sidebar from "./Sidebar";
 import Topbar from "./Topbar";
 import { useState, useEffect } from "react";
-import socket from "../../utils/socket";
+import socket from "../../../utils/socket";
 import { toast } from "react-toastify";
 
 const AdminLayout = ({ admin }) => {
     const [sidebarOpen, setSidebarOpen] = useState(false);
     useEffect(()=>{
         socket.on('new-visitor', (visitor) => {
-            toast.info(`${visitor.first_name} has registered at the gate.`);
+            toast.info(`${visitor.name} has registered at the gate.`);
         });
         return () => socket.off('new-visitor');
     },[]);

@@ -39,8 +39,7 @@ const AdminVisitorLog = () => {
         if (searchTerm.trim()) {
             const term = searchTerm.toLowerCase();
             data = data.filter(v =>
-                v.first_name.toLowerCase().includes(term) ||
-                v.last_name?.toLowerCase().includes(term) ||
+                v.name.toLowerCase().includes(term) ||
                 v.email.toLowerCase().includes(term) ||
                 v.purpose.toLowerCase().includes(term)
             );
@@ -66,7 +65,7 @@ const AdminVisitorLog = () => {
   
     const exportToExcel = () => {
         const exportData = filtered.map((v) => ({
-            Name: v.first_name,
+            Name: v.name,
             Email: v.email,
             Purpose: v.purpose,
             Status: v.status,
@@ -168,7 +167,7 @@ const AdminVisitorLog = () => {
                         <tbody className="divide-y divide-gray-500">
                             {paginatedVisitors.map((v) => (
                                 <tr key={v._id} className="hover:bg-blue-50">
-                                    <td className="px-4 py-2">{v.first_name} {v.last_name || ''}</td>
+                                    <td className="px-4 py-2">{v.name}</td>
                                     <td className="px-4 py-2">{v.email}</td>
                                     <td className="px-4 py-2">{v.phone}</td>
                                     <td className="px-4 py-2">{v.purpose}</td>

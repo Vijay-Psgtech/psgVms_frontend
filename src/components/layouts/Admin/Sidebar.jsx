@@ -1,6 +1,6 @@
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { Home, Users, LogOut, BarChart, Puzzle, UserCheck, Tags, ChevronDown, ChevronUp, XCircle } from 'lucide-react';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../../context/AuthContext';
 import { useState } from 'react';
 
 const menuItems = [

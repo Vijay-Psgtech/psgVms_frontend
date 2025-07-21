@@ -31,7 +31,7 @@ export default function Login() {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-800">
+        <div className="min-h-screen flex items-center justify-center bg-gray-100">
             <div className="flex w-full max-w-4xl bg-white rounded-2xl shadow-lg overflow-hidden">
                 {/* Left Panel - Branding */}
                 <div className="hidden md:flex flex-col items-center justify-center w-1/2 bg-white shadow-2xl p-8 text-center">
