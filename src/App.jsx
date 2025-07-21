@@ -11,6 +11,7 @@ import AdminDashboard from "./pages/Admin/AdminDashboard";
 import AdminNotification from "./pages/Admin/AdminNotification";
 import AdminVisitorLog from "./pages/Admin/AdminVisitorLog";
 import AdminAnalytics from "./pages/Admin/AdminAnalytics";
+import AdminHostAdd from "./pages/Admin/Host/AdminHostAdd";
 
 
 
@@ -26,6 +27,7 @@ function App() {
           <Route path="visitors" element={<AdminVisitorLog />} />
           <Route path="notifications" element={<AdminNotification  hostEmail={admin.email} />} />
           <Route path="visitors-stats" element={<AdminAnalytics />} />
+          <Route path="master/host" element={<AdminHostAdd />} />
         </Route>
       </Routes>
       <ToastContainer position="top-right" autoClose={ 3000 }/>
