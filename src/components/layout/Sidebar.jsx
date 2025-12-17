@@ -1,47 +1,56 @@
-// src/components/layout/Sidebar.jsx
-import React from 'react';
-import { NavLink } from 'react-router-dom';
+import React from "react";
+import { Link, useLocation } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
 
-const Sidebar = () => {
+export default function Sidebar() {
+  const { user } = useAuth();
+  const location = useLocation();
+
+  const role = user?.role;
+
+  // Dashboard menu based on role
+  const menuItems = {   
+    admin: [
+      { label: "Dashboard", to: "/admin" },
+      { label: "Manage Users", to: "/admin/users" },
+      { label: "Visitors", to: "/admin/visitors" }, 
+      { label: "Reports", to: "/admin/reports" },
+    ],
+    security: [
+      { label: "Dashboard", to: "/security" },
+      { label: "Check-In Visitors", to: "/security/check-in" },
+      { label: "Watchlist", to: "/security/watchlist" },
+    ],
+    reception: [
+      { label: "Dashboard", to: "/reception" },
+      { label: "Register Visitor", to: "/reception/register" },
+      { label: "Visitor Logs", to: "/reception/logs" },
+    ],
+  };
+
+  const items = menuItems[role] || [];
+
   return (
-    <div className="w-104 flex flex-col justify-between bg-blue-950 text-white px-6 py-10 shadow-lg min-h-screen">
-      <div>
-        <h1 className="text-3xl font-extrabold text-center mb-12 leading-tight">
-          🎫 VMS <span className="text-yellow-300">Portal</span>
-        </h1>
-        <nav className="space-y-4">
-          <NavLink
-            to="/register"
-            className={({ isActive }) =>
-              `block px-4 py-2 rounded-xl text-base tracking-wide transition duration-200 ${
-                isActive
-                  ? 'bg-yellow-400 text-blue-900 font-semibold shadow'
-                  : 'hover:bg-blue-800 hover:text-yellow-300'
-              }`
-            }
-          >
-            🛂 Gate Entry
-          </NavLink>
+    <div className="w-full h-full border-r bg-white p-4">
+      <h2 className="text-lg font-semibold mb-4 capitalize">{role} Panel</h2>
 
-          <NavLink
-            to="/appointment-status"
-            className={({ isActive }) =>
-              `block px-4 py-2 rounded-xl text-base tracking-wide transition duration-200 ${
-                isActive
-                  ? 'bg-yellow-400 text-blue-900 font-semibold shadow'
-                  : 'hover:bg-blue-800 hover:text-yellow-300'
-              }`
-            }
-          >
-            📋 Visitor Appointment
-          </NavLink>
-        </nav>
+      <div className="flex flex-col gap-2">
+        {items.map((item) => {
+          const isActive = location.pathname === item.to;
+
+          return (
+            <Link
+              key={item.to}
+              to={item.to}
+              className={`block px-3 py-2 rounded-md text-sm font-medium 
+              ${isActive ? "bg-blue-600 text-white" : "text-gray-700 hover:bg-gray-100"}`}
+            >
+              {item.label}
+            </Link>
+          );
+        })}
       </div>
-      <footer className="text-xs text-center text-gray-400">
-        © 2025 PSG Institutions
-      </footer>
     </div>
   );
-};
+}
 
-export default Sidebar;

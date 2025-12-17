@@ -1,15 +1,16 @@
-// src/components/QRCodeDisplay.jsx
-import React from 'react';
-import { QRCodeCanvas } from 'qrcode.react';
+import React from "react";
+import { QRCodeCanvas } from "qrcode.react";
 
-const QRCodeDisplay = ({ visitorId }) => {
-  const qrLink = `${window.location.origin}/register/${visitorId}`; // E.g., http://localhost:5173/register/VIS-00123
+export default function QRCodeDisplay({ visitorId }) {
+  if (!visitorId) return null;
 
   return (
-    <div className="flex justify-center mt-4">
-      <QRCodeCanvas value={qrLink} size={160} level="H" />
+    <div className="flex flex-col items-center">
+      <QRCodeCanvas value={visitorId} size={180} />
+
+      <p className="text-xs text-gray-600 mt-2">
+        Visitor ID: {visitorId}
+      </p>
     </div>
   );
-};
-        
-export default QRCodeDisplay;
+}

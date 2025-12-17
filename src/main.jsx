@@ -1,11 +1,10 @@
-import { StrictMode } from 'react';
-import { createRoot } from 'react-dom/client';
-import './index.css';   // ✅ Correct: only import here
+import React from "react";
+import { createRoot } from "react-dom/client";
+import App from "./App";
+import SocketProvider from "./context/SocketProvider";
 
-import App from './App.jsx';
-
-createRoot(document.getElementById('root')).render(
-  <StrictMode>
+createRoot(document.getElementById("root")).render(
+  <SocketProvider>
     <App />
-  </StrictMode>
+  </SocketProvider>
 );
