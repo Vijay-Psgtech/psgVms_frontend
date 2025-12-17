@@ -86,7 +86,7 @@ const AdminDashboard = () => {
                   <p className="text-xs text-gray-400">Requested on: {new Date(visitor.createdAt).toLocaleDateString()}</p>
                 </div>
                 <div className="mt-4 md:mt-0 flex space-x-2">
-                  <button
+                  {/*<button
                     onClick={() => handleAction(visitor._id, 'approved')}
                     className="flex items-center px-3 py-1.5 bg-green-500 text-white rounded-lg hover:bg-green-600 transition"
                     disabled={loading}
@@ -101,7 +101,7 @@ const AdminDashboard = () => {
                   >
                     <XCircle size={16} className="mr-1" />
                     Reject
-                  </button>
+                  </button>*/}
                 </div>
               </div>
             ))}

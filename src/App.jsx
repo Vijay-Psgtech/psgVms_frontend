@@ -18,7 +18,7 @@ import AdminDashboard from "./pages/Admin/AdminDashboard";
 import AdminNotification from "./pages/Admin/AdminNotification";
 import AdminVisitorLog from "./pages/Admin/AdminVisitorLog";
 import AdminAnalytics from "./pages/Admin/AdminAnalytics";
-import AdminHostAdd from "./pages/Admin/Host/AdminHostAdd";
+import EmployeeList from "./pages/Admin/Employees/EmployeeList";
 
 // Component to wrap sidebar layout conditionally
 const NonAdminLayout = ({ children }) => (
@@ -62,7 +62,7 @@ const AppRoutes = () => {
               element={<AdminNotification hostEmail={admin?.email} />}
             />
             <Route path="visitors-stats" element={<AdminAnalytics />} />
-            <Route path="master/host" element={<AdminHostAdd />} />
+            <Route path="master/employee" element={<EmployeeList />} /> 
           </Route>
         </Routes>
       )}
