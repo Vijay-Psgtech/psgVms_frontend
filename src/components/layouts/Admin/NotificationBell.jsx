@@ -1,9 +1,9 @@
 import { Bell } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
-import axiosInstance from '../../utils/axiosInstance';
+import axiosInstance from '../../../utils/axiosInstance';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
-import socket from '../../utils/socket';
+import socket from '../../../utils/socket';
 
 dayjs.extend(relativeTime);
 

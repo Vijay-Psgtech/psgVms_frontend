@@ -80,13 +80,13 @@ const AdminDashboard = () => {
                 className="flex flex-col md:flex-row justify-between items-start md:items-center p-4 border-b-4 border-blue-500 rounded-lg shadow-lg hover:bg-blue-50 transition-all"
               >
                 <div className="space-y-1 font-semibold">
-                  <p className="text-sm font-medium text-gray-900">{visitor.first_name} {visitor.last_name || ''}</p>
+                  <p className="text-sm font-medium text-gray-900">{visitor.name}</p>
                   <p className="text-sm text-gray-600">{visitor.email}</p>
                   <p className="text-sm text-gray-500">Purpose: {visitor.purpose}</p>
                   <p className="text-xs text-gray-400">Requested on: {new Date(visitor.createdAt).toLocaleDateString()}</p>
                 </div>
                 <div className="mt-4 md:mt-0 flex space-x-2">
-                  <button
+                  {/*<button
                     onClick={() => handleAction(visitor._id, 'approved')}
                     className="flex items-center px-3 py-1.5 bg-green-500 text-white rounded-lg hover:bg-green-600 transition"
                     disabled={loading}
@@ -101,7 +101,7 @@ const AdminDashboard = () => {
                   >
                     <XCircle size={16} className="mr-1" />
                     Reject
-                  </button>
+                  </button>*/}
                 </div>
               </div>
             ))}
