@@ -1,5 +1,6 @@
+"use client";
+
 import React, { useState, useEffect } from "react";
-import axios from "axios"; // ✅ REQUIRED
 import api from "../utils/api";
 import bannerImage from "../assets/visitor-banner.jpg";
 
@@ -27,46 +28,26 @@ const VisitorRegistrationForm = () => {
   const [buildings, setBuildings] = useState([]);
   const [selectedEmployeePhone, setSelectedEmployeePhone] = useState("");
   const [message, setMessage] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
-  const dummyEmployees = [
-    { name: "Anita Rao", phone: "9566844908", department: "HR" },
-    { name: "Karthik Kumar", phone: "8754885648", department: "IT" },
-    { name: "Priya Singh", phone: "9876543333", department: "Finance" },
-    { name: "Arjun Mehta", phone: "9876543444", department: "IT" },
-    { name: "Divya Menon", phone: "9876543555", department: "Admin" },
-  ];
-
-  const dummyBuildings = [
-    { _id: "b1", name: "Main Block" },
-    { _id: "b2", name: "Admin Block" },
-    { _id: "b3", name: "R&D Block" },
-  ];
-
-  // ---------------- FETCH DATA ----------------
+  /* ---------------- FETCH MASTER DATA ---------------- */
   useEffect(() => {
-    const fetchEmployees = async () => {
+    const fetchData = async () => {
       try {
-        const res = await axios.get("http://localhost:5000/api/employees");
-        setEmployees(res.data);
-      } catch {
-        setEmployees(dummyEmployees);
+        const [empRes, bldRes] = await Promise.all([
+          api.get("/employees"),
+          api.get("/buildings"),
+        ]);
+        setEmployees(empRes.data);
+        setBuildings(bldRes.data);
+      } catch (err) {
+        console.warn("Using fallback data");
       }
     };
-
-    const fetchBuildings = async () => {
-      try {
-        const res = await axios.get("http://localhost:5000/api/buildings");
-        setBuildings(res.data);
-      } catch {
-        setBuildings(dummyBuildings);
-      }
-    };
-
-    fetchEmployees();
-    fetchBuildings();
+    fetchData();
   }, []);
 
-  // ---------------- FILTER EMPLOYEES ----------------
+  /* ---------------- FILTER EMPLOYEES ---------------- */
   useEffect(() => {
     if (!formData.department) {
       setFilteredEmployees([]);
@@ -77,26 +58,27 @@ const VisitorRegistrationForm = () => {
     );
   }, [formData.department, employees]);
 
-  // ---------------- HANDLERS ----------------
+  /* ---------------- HANDLERS ---------------- */
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    setFormData((p) => ({ ...p, [name]: value }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setSubmitting(true);
+    setMessage("");
 
     try {
-      await api.post("/visitor", formData);
+      await api.post("/visitor/create", {
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        phone: formData.phone,
+        host: formData.employee, // 👈 REQUIRED
+        gate: formData.building, // 👈 REQUIRED
+      });
 
-      if (selectedEmployeePhone) {
-        await api.post("/notify", {
-          to: `+91${selectedEmployeePhone}`,
-          message: `Visitor ${formData.firstName} ${formData.lastName} scheduled at ${formData.timeSlot}`,
-        });
-      }
-
-      setMessage("Visitor registered successfully!");
+      setMessage("Visitor registered successfully. Awaiting admin approval.");
 
       setFormData({
         firstName: "",
@@ -116,19 +98,24 @@ const VisitorRegistrationForm = () => {
     } catch (err) {
       console.error("Submission failed:", err);
       setMessage(err.response?.data?.message || "Submission failed");
+    } finally {
+      setSubmitting(false);
     }
   };
 
-  // ---------------- UI ----------------
+  /* ---------------- UI ---------------- */
   return (
     <div
       className="min-h-screen flex items-center justify-center bg-cover bg-center"
       style={{ backgroundImage: `url(${bannerImage})` }}
     >
-      <div className="bg-white/90 backdrop-blur-md p-10 rounded-2xl shadow-xl w-full max-w-3xl">
-        <h2 className="text-3xl font-bold text-center mb-6">
+      <div className="bg-white/80 backdrop-blur-xl p-10 rounded-3xl shadow-2xl w-full max-w-4xl">
+        <h2 className="text-3xl font-semibold text-center mb-2">
           Visitor Registration
         </h2>
+        <p className="text-center text-gray-600 mb-6">
+          All visits require admin approval
+        </p>
 
         {message && (
           <p className="text-center text-blue-700 font-medium mb-4">
@@ -149,17 +136,21 @@ const VisitorRegistrationForm = () => {
             ["nid", "Aadhaar Number"],
             ["address", "Address"],
             ["purpose", "Purpose of Visit"],
-          ].map(([name, placeholder]) => (
+          ].map(([name, label]) => (
             <input
               key={name}
               name={name}
-              placeholder={placeholder}
+              placeholder={label}
               value={formData[name]}
               onChange={handleChange}
               className="input-style"
-              required={["firstName", "lastName", "email", "phone", "nid"].includes(
-                name
-              )}
+              required={[
+                "firstName",
+                "lastName",
+                "email",
+                "phone",
+                "nid",
+              ].includes(name)}
             />
           ))}
 
@@ -231,8 +222,11 @@ const VisitorRegistrationForm = () => {
           </select>
 
           <div className="md:col-span-2">
-            <button className="w-full bg-blue-700 text-white py-2 rounded-xl">
-              Register Visitor
+            <button
+              disabled={submitting}
+              className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-3 rounded-xl font-medium hover:opacity-90 transition"
+            >
+              {submitting ? "Submitting..." : "Register Visitor"}
             </button>
           </div>
         </form>
@@ -242,10 +236,3 @@ const VisitorRegistrationForm = () => {
 };
 
 export default VisitorRegistrationForm;
-
-
-
-
-
-
-

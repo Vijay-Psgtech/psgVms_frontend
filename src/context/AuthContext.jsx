@@ -1,82 +1,111 @@
+"use client";
+
 import React, { createContext, useContext, useEffect, useState } from "react";
 
 const AuthContext = createContext(null);
 
-export function AuthProvider({ children }) {
+function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Restore session
+  /* ---------------- RESTORE SESSION ---------------- */
   useEffect(() => {
     try {
       const savedToken = localStorage.getItem("token");
       const savedUser = localStorage.getItem("user");
 
       if (savedToken && savedUser) {
+        const parsed = JSON.parse(savedUser);
         setToken(savedToken);
-        setUser(JSON.parse(savedUser));
+        setUser({
+          ...parsed,
+          role: parsed.role?.toLowerCase(),
+        });
       }
-    } catch (err) {
-      console.error("Auth restore error:", err);
-      localStorage.removeItem("token");
-      localStorage.removeItem("user");
-      localStorage.removeItem("gateId");
+    } catch (e) {
+      console.error("Auth restore failed", e);
+      localStorage.clear();
     } finally {
       setLoading(false);
     }
   }, []);
 
-  // FINAL login (password / OTP)
+  /* ---------------- LOGIN ---------------- */
   const loginUser = ({ token, user }) => {
-    if (!token || !user) {
-      console.warn("loginUser called without token or user");
-      return;
-    }
-
-    const cleanUser = {
-      id: user._id || user.id,
-      name: user.name,
-      email: user.email,
-      role: user.role,
-      gateId: user.gateId || null,
-    };
-
     setToken(token);
-    setUser(cleanUser);
+    setUser({
+      ...user,
+      role: user.role.toLowerCase(),
+    });
 
     localStorage.setItem("token", token);
-    localStorage.setItem("user", JSON.stringify(cleanUser));
+    localStorage.setItem("user", JSON.stringify(user));
 
-    // ✅ REQUIRED for SecurityDashboard socket auth
-    if (cleanUser.gateId) {
-      localStorage.setItem("gateId", cleanUser.gateId);
+    if (user.gateId) {
+      localStorage.setItem("gateId", user.gateId);
     }
   };
 
+  /* ---------------- REFRESH USER (🔥 FIX) ---------------- */
+  const refreshUser = async () => {
+    try {
+      if (!token) return;
+
+      const res = await fetch("/api/auth/me", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        const updatedUser = {
+          ...data.user,
+          role: data.user.role?.toLowerCase(),
+        };
+
+        setUser(updatedUser);
+        localStorage.setItem("user", JSON.stringify(updatedUser));
+
+        if (updatedUser.gateId) {
+          localStorage.setItem("gateId", updatedUser.gateId);
+        }
+      }
+    } catch (err) {
+      console.error("Failed to refresh user", err);
+    }
+  };
+
+  /* ---------------- LOGOUT ---------------- */
   const logoutUser = () => {
     setToken(null);
     setUser(null);
-
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-    localStorage.removeItem("gateId");
-    localStorage.removeItem("otpEmail");
+    localStorage.clear();
   };
 
   return (
     <AuthContext.Provider
-      value={{ token, user, loading, loginUser, logoutUser }}
+      value={{
+        user,
+        token,
+        loading,
+        loginUser,
+        logoutUser,
+        refreshUser, // ✅ EXPOSED
+      }}
     >
       {children}
     </AuthContext.Provider>
   );
 }
 
-export function useAuth() {
+/* ✅ REQUIRED EXPORTS */
+export default AuthProvider;
+
+export const useAuth = () => {
   const ctx = useContext(AuthContext);
-  if (!ctx) {
-    throw new Error("useAuth must be used inside AuthProvider");
-  }
+  if (!ctx) throw new Error("useAuth must be used inside AuthProvider");
   return ctx;
-}
+};

@@ -32,37 +32,20 @@ export default function VerifyOTP() {
 
   // ---------------- VERIFY OTP ----------------
   const handleVerify = async () => {
-    if (!otp) return alert("Enter OTP");
+  if (!otp) return alert("Enter OTP");
 
-    try {
-      const res = await api.post("/auth/verify-otp", {
-        email,
-        otp,
-      });
+  try {
+    const res = await api.post("/auth/verify-otp", { email, otp });
 
-      // ✅ SAVE AUTH DATA (THIS FIXES YOUR ISSUE)
-      localStorage.setItem("token", res.data.token);
-      localStorage.setItem("role", res.data.user.role);
+    loginUser(res.data);
 
-      // IMPORTANT: security users MUST have gateId
-      if (res.data.user.gateId) {
-        localStorage.setItem("gateId", res.data.user.gateId);
-      }
+    localStorage.removeItem("otpEmail");
 
-      // keep context login
-      loginUser(res.data);
-
-      // cleanup temp email
-      localStorage.removeItem("otpEmail");
-
-      // redirect
-      navigate(dashboardRoutes[res.data.user.role] || "/", {
-        replace: true,
-      });
-    } catch (err) {
-      alert(err.response?.data?.error || "OTP verification failed");
-    }
-  };
+    navigate(dashboardRoutes[res.data.user.role], { replace: true });
+  } catch (err) {
+    alert(err.response?.data?.error || "OTP verification failed");
+  }
+};
 
   return (
     <div style={{ width: 300, margin: "auto", marginTop: 100 }}>
@@ -85,3 +68,4 @@ export default function VerifyOTP() {
     </div>
   );
 }
+

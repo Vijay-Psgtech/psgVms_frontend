@@ -1,83 +1,110 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
-import { io } from "socket.io-client";
+import React, { useState } from "react";
+import { Box, Typography, Button, Paper, Stack } from "@mui/material";
+import { useSocket } from "../context/SocketProvider";
 import { useAuth } from "../context/AuthContext";
-
-const SOCKET_URL =
-  import.meta.env.VITE_SOCKET_URL || "http://localhost:5000";
+import api from "../utils/api";
 
 export default function SecurityDashboard() {
-  const { token, user, loading } = useAuth();
-  const socketRef = useRef(null);
+  const { user, logoutUser } = useAuth();
+  const { connected } = useSocket();
 
-  const [connected, setConnected] = useState(false);
-  const [scanResult, setScanResult] = useState(null);
+  const [visitorId, setVisitorId] = useState("");
+  const [image, setImage] = useState(null);
+  const [status, setStatus] = useState("");
 
-  useEffect(() => {
-    if (loading) return;
-    if (!token || user?.role !== "security" || !user?.gateId) {
-      console.warn("Waiting for security auth...");
-      return;
-    }
+  /* ---------------- FACE VERIFY ---------------- */
+  const verifyFace = async () => {
+    if (!image || !visitorId) return;
 
-    if (socketRef.current) return;
+    const reader = new FileReader();
+    reader.onloadend = async () => {
+      try {
+        const base64 = reader.result;
+        const res = await api.post("/visitor/verify-face", {
+          visitorId,
+          faceImageBase64: base64,
+        });
 
-    const socket = io(SOCKET_URL, {
-      transports: ["websocket"],
-      auth: {
-        token,
-        role: user.role,
-        gateId: user.gateId,
-      },
-    });
-
-    socketRef.current = socket;
-
-    socket.on("connect", () => {
-      setConnected(true);
-      console.log("✅ Socket connected");
-    });
-
-    socket.on("disconnect", () => setConnected(false));
-
-    socket.on("SCAN_RESULT", setScanResult);
-
-    socket.on("connect_error", (err) =>
-      console.error("Socket error:", err.message)
-    );
-
-    return () => {
-      socket.disconnect();
-      socketRef.current = null;
+        setStatus(res.data.verified ? "Face Verified ✅" : "Face Mismatch ❌");
+      } catch (err) {
+        setStatus("Verification Failed");
+      }
     };
-  }, [token, user, loading]);
 
-  if (loading || !user) {
-    return <p style={{ padding: 24 }}>Loading security dashboard…</p>;
-  }
+    reader.readAsDataURL(image);
+  };
+
+  /* ---------------- CHECK-IN ---------------- */
+  const checkIn = async () => {
+    try {
+      await api.post(`/visitor/check-in/${visitorId}`);
+      setStatus("Checked In Successfully 🟢");
+    } catch {
+      setStatus("Check-in Failed");
+    }
+  };
 
   return (
-    <div style={{ padding: 24 }}>
-      <h2>Security Dashboard</h2>
+    <Box p={3}>
+      <Stack direction="row" justifyContent="space-between">
+        <Typography variant="h5">
+          Security Gate ({user?.gateId || "Unassigned"})
+        </Typography>
 
-      <p>
-        Status:{" "}
-        <b style={{ color: connected ? "green" : "red" }}>
-          {connected ? "Connected" : "Disconnected"}
-        </b>
-      </p>
+        <Button color="error" onClick={logoutUser}>
+          Logout
+        </Button>
+      </Stack>
 
-      {!scanResult ? (
-        <div style={{ marginTop: 24 }}>Waiting for QR scan…</div>
-      ) : (
-        <div style={{ marginTop: 24 }}>
-          <p><b>Name:</b> {scanResult.name}</p>
-          <p><b>Company:</b> {scanResult.company}</p>
-          <p><b>Purpose:</b> {scanResult.purpose}</p>
-          <p><b>Status:</b> {scanResult.status}</p>
-        </div>
-      )}
-    </div>
+      <Typography mt={1}>
+        Socket: {connected ? "🟢 Connected" : "🔴 Offline"}
+      </Typography>
+
+      <Paper sx={{ p: 3, mt: 3 }}>
+        <Stack spacing={2}>
+          <input
+            placeholder="Visitor ID / QR ID"
+            value={visitorId}
+            onChange={(e) => setVisitorId(e.target.value)}
+          />
+
+          <input
+            type="file"
+            accept="image/*"
+            onChange={(e) => setImage(e.target.files[0])}
+          />
+
+          <Button
+            onClick={verifyFace}
+            disabled={!image || !visitorId}
+          >
+            Verify Face
+          </Button>
+
+          <Button
+            onClick={checkIn}
+            disabled={status !== "Face Verified ✅"}
+          >
+            Allow Entry
+          </Button>
+
+          <Button
+            href={`http://localhost:5000/api/visitor/badge/${visitorId}`}
+            target="_blank"
+            disabled={!visitorId}
+          >
+            Download Badge
+          </Button>
+
+          {status && (
+            <Typography fontWeight={600}>
+              Status: {status}
+            </Typography>
+          )}
+        </Stack>
+      </Paper>
+    </Box>
   );
 }

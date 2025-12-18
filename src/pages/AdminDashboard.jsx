@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   Box,
   Typography,
@@ -16,17 +16,10 @@ import {
   DialogContent,
   DialogActions,
   TextField,
-  Table,
-  TableHead,
-  TableRow,
-  TableCell,
-  TableBody,
   Chip,
 } from "@mui/material";
 import Grid from "@mui/material/Grid";
 import { useNavigate } from "react-router-dom";
-import api from "../utils/api";
-import socket from "../utils/socket";
 
 import {
   ResponsiveContainer,
@@ -37,6 +30,12 @@ import {
   YAxis,
 } from "recharts";
 
+import api from "../utils/api";
+import { generateQR } from "../utils/qr";
+import Webcam from "react-webcam";
+import { useSocket } from "../context/SocketProvider";
+
+/* ---------------- CONSTANTS ---------------- */
 const STATUS_TABS = ["PENDING", "APPROVED", "REJECTED", "IN", "OUT"];
 const OVERSTAY_LIMIT_MIN = 120;
 
@@ -49,6 +48,8 @@ const formatDuration = (mins) =>
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
+  const { socket } = useSocket();
+  const webcamRef = useRef(null);
 
   const [stats, setStats] = useState({});
   const [visitors, setVisitors] = useState([]);
@@ -59,42 +60,70 @@ export default function AdminDashboard() {
   const [rejectReason, setRejectReason] = useState("");
   const [rejectId, setRejectId] = useState(null);
 
+  const [selected, setSelected] = useState(null);
+  const [faceImage, setFaceImage] = useState(null);
+  const [qr, setQr] = useState(null);
+
   /* ---------------- FETCH ---------------- */
   const fetchAll = async () => {
     const [s, v] = await Promise.all([
       api.get("/visitor/stats"),
       api.get("/visitor"),
-      api.get("/audit"),
     ]);
-
     setStats(s.data);
     setVisitors(v.data);
   };
 
+  /* ---------------- SOCKET ---------------- */
   useEffect(() => {
     fetchAll().finally(() => setLoading(false));
+
+    if (!socket) return;
 
     socket.on("VISITOR_PENDING", fetchAll);
     socket.on("VISITOR_APPROVAL", fetchAll);
     socket.on("VISITOR_CHECKIN", fetchAll);
     socket.on("VISITOR_CHECKOUT", fetchAll);
 
-    return () => socket.disconnect();
-  }, []);
+    return () => {
+      socket.off("VISITOR_PENDING", fetchAll);
+      socket.off("VISITOR_APPROVAL", fetchAll);
+      socket.off("VISITOR_CHECKIN", fetchAll);
+      socket.off("VISITOR_CHECKOUT", fetchAll);
+    };
+  }, [socket]);
 
   /* ---------------- LOGOUT ---------------- */
   const logout = () => {
     localStorage.clear();
-    socket.disconnect();
     navigate("/login", { replace: true });
   };
 
-  /* ---------------- ACTIONS ---------------- */
-  const approve = async (id) => {
-    await api.post(`/visitor/approve/${id}`, { action: "APPROVED" });
+  /* ---------------- FACE CAPTURE ---------------- */
+  const captureFace = () => {
+    const img = webcamRef.current.getScreenshot();
+    setFaceImage(img);
+  };
+
+  /* ---------------- APPROVE ---------------- */
+  const approveVisitor = async () => {
+    if (!selected || !faceImage) return;
+
+    await api.post(`/visitor/approve/${selected._id}`, {
+      action: "APPROVED",
+      faceImageBase64: faceImage,
+    });
+
+    const qrData = await generateQR({
+      visitorId: selected._id,
+      gateId: selected.gateId,
+    });
+
+    setQr(qrData);
     fetchAll();
   };
 
+  /* ---------------- REJECT ---------------- */
   const submitReject = async () => {
     await api.post(`/visitor/approve/${rejectId}`, {
       action: "REJECTED",
@@ -137,10 +166,17 @@ export default function AdminDashboard() {
     }));
   }, [visitorsWithMetrics]);
 
-  if (loading) return <CircularProgress />;
+  if (loading) {
+    return (
+      <Box p={3} display="flex" justifyContent="center">
+        <CircularProgress />
+      </Box>
+    );
+  }
 
   return (
     <Box p={3}>
+      {/* HEADER */}
       <Stack direction="row" justifyContent="space-between">
         <Typography variant="h5">Admin Dashboard</Typography>
         <Button color="error" onClick={logout}>Logout</Button>
@@ -149,67 +185,80 @@ export default function AdminDashboard() {
       {/* STATS */}
       <Grid container spacing={2} mt={2}>
         {["today", "checkedIn", "checkedOut"].map((k) => (
-          <Grid key={k} size={{ xs: 12, md: 4 }}>
-            <Paper sx={{ p: 2 }}>
-              <Typography color="text.secondary">{k.toUpperCase()}</Typography>
-              <Typography variant="h4">{stats[k]}</Typography>
-            </Paper>
-          </Grid>
+          <Grid container spacing={2} mt={2}>
+  {["today", "checkedIn", "checkedOut"].map((k) => (
+    <Grid key={k} xs={12} md={4}>
+      <Paper sx={{ p: 2 }}>
+        <Typography color="text.secondary">
+          {k.toUpperCase()}
+        </Typography>
+        <Typography variant="h4">{stats[k] || 0}</Typography>
+      </Paper>
+    </Grid>
+  ))}
+</Grid>
         ))}
       </Grid>
 
-      {/* AVERAGE VISIT DURATION */}
-      <Paper sx={{ p: 2, mt: 3 }}>
-        <Typography variant="h6">Average Visit Duration</Typography>
-        <ResponsiveContainer height={260}>
-          <AreaChart data={avgVisitChart}>
-            <XAxis dataKey="date" />
-            <YAxis />
-            <Tooltip formatter={(v) => formatDuration(v)} />
-            <Area dataKey="avgMinutes" />
-          </AreaChart>
-        </ResponsiveContainer>
-      </Paper>
+      {/* APPROVAL DIALOG */}
+      <Dialog open={!!selected} onClose={() => setSelected(null)} fullWidth>
+        <DialogTitle>Approve Visitor</DialogTitle>
+        <DialogContent>
+          <Webcam ref={webcamRef} screenshotFormat="image/jpeg" />
+          <Button sx={{ mt: 1 }} onClick={captureFace}>
+            Capture Face
+          </Button>
 
-      {/* STATUS TABS */}
+          {qr && (
+            <Box mt={2} textAlign="center">
+              <img src={qr} alt="QR" />
+              <Typography>QR Generated</Typography>
+              <Button
+                sx={{ mt: 1 }}
+                href={`http://localhost:5000/api/visitor/badge/${selected._id}`}
+                target="_blank"
+              >
+                Download Badge
+              </Button>
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={approveVisitor} disabled={!faceImage}>
+            Approve & Generate QR
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* TABS */}
       <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ mt: 3 }}>
-        {STATUS_TABS.map((s) => <Tab key={s} value={s} label={s} />)}
+        {STATUS_TABS.map((s) => (
+          <Tab key={s} value={s} label={s} />
+        ))}
       </Tabs>
 
       {/* VISITORS */}
       <Paper sx={{ p: 2 }}>
         {filteredVisitors.map((v) => (
-          <Paper key={v._id} variant="outlined" sx={{ p: 2, mb: 2 }}>
+          <Paper key={v._id} sx={{ p: 2, mb: 2 }} variant="outlined">
             <Stack direction="row" justifyContent="space-between">
               <Typography fontWeight={600}>{v.name}</Typography>
-              <Stack direction="row" spacing={1}>
-                {v.isOverstay && <Chip label="OVERSTAY" color="error" />}
-                <Chip label={v.status} />
-              </Stack>
-            </Stack>
-
-            <Typography variant="body2">
-              Host: {v.host} • Phone: {v.phone}
-            </Typography>
-
-            <Divider sx={{ my: 1 }} />
-
-            <Stack direction="row" spacing={3}>
-              <Typography variant="body2">
-                Time Inside: {formatDuration(v.minutesInside)}
-              </Typography>
-              <Typography variant="body2">
-                Meeting Duration: {formatDuration(v.minutesInside)}
-              </Typography>
+              <Chip label={v.status} />
             </Stack>
 
             {v.status === "PENDING" && (
               <Stack direction="row" spacing={1} mt={1}>
-                <Button size="small" onClick={() => approve(v._id)}>Approve</Button>
-                <Button size="small" color="error" onClick={() => {
-                  setRejectId(v._id);
-                  setRejectOpen(true);
-                }}>
+                <Button size="small" onClick={() => setSelected(v)}>
+                  Approve
+                </Button>
+                <Button
+                  size="small"
+                  color="error"
+                  onClick={() => {
+                    setRejectId(v._id);
+                    setRejectOpen(true);
+                  }}
+                >
                   Reject
                 </Button>
               </Stack>
@@ -218,7 +267,7 @@ export default function AdminDashboard() {
         ))}
       </Paper>
 
-      {/* REJECT MODAL */}
+      {/* REJECT */}
       <Dialog open={rejectOpen} onClose={() => setRejectOpen(false)}>
         <DialogTitle>Reject Visitor</DialogTitle>
         <DialogContent>
@@ -231,12 +280,12 @@ export default function AdminDashboard() {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setRejectOpen(false)}>Cancel</Button>
-          <Button color="error" onClick={submitReject}>Reject</Button>
+          <Button color="error" onClick={submitReject}>
+            Reject
+          </Button>
         </DialogActions>
       </Dialog>
     </Box>
   );
 }
 
-
-  
