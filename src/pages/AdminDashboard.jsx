@@ -19,7 +19,7 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  Grid,
+  
   Tab,
   Tabs,
   Alert as MuiAlert,
@@ -29,6 +29,9 @@ import {
   Card,
   CardContent,
 } from "@mui/material";
+
+import Grid from "@mui/material/Grid";
+
 
 import LogoutIcon from "@mui/icons-material/Logout";
 import AdminPanelSettingsIcon from "@mui/icons-material/AdminPanelSettings";

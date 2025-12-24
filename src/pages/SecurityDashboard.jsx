@@ -11,7 +11,6 @@ import {
   Divider,
   Fade,
   TextField,
-  Grid,
   Avatar,
   Tab,
   Tabs,
@@ -20,6 +19,7 @@ import {
   Drawer,
   Card,
   CardContent,
+  Grid,
 } from "@mui/material";
 
 import LogoutIcon from "@mui/icons-material/Logout";
@@ -47,7 +47,7 @@ export default function SecurityDashboard() {
   const [, forceTick] = useState(0);
 
   /* ================= SOCKET.IO ================= */
-  useEffect(() => {   
+  useEffect(() => {
     const socket = io("http://localhost:5000", {
       transports: ["websocket", "polling"],
     });
@@ -63,7 +63,8 @@ export default function SecurityDashboard() {
 
     socket.on("alert:new", (alert) => {
       console.log("🔔 New alert received:", alert);
-      if (user?.gateId && alert.gate === user.gateId) {
+      const alertGate = typeof alert.gate === "object" ? alert.gate._id || alert.gate.name : alert.gate;
+      if (String(alertGate) === String(user?.gateId)) {
         setAlerts((prev) => [alert, ...prev]);
       }
     });
@@ -75,9 +76,12 @@ export default function SecurityDashboard() {
   const loadVisitors = async () => {
     try {
       const res = await api.get("/visitor");
+      console.log("📋 Loaded visitors:", res.data);
+      console.log("👤 User gateId:", user?.gateId);
       setVisitors(res.data || []);
       setError("");
     } catch (err) {
+      console.error("❌ Load error:", err);
       setError("Failed to load visitors");
     }
   };
@@ -93,12 +97,16 @@ export default function SecurityDashboard() {
   };
 
   useEffect(() => {
-    loadVisitors();
-    loadAlerts();
-
-    const poll = setInterval(() => {
+    if (user) {
       loadVisitors();
       loadAlerts();
+    }
+
+    const poll = setInterval(() => {
+      if (user) {
+        loadVisitors();
+        loadAlerts();
+      }
     }, 5000);
 
     const timer = setInterval(() => forceTick((n) => n + 1), 1000);
@@ -107,7 +115,7 @@ export default function SecurityDashboard() {
       clearInterval(poll);
       clearInterval(timer);
     };
-  }, []);
+  }, [user]);
 
   /* ================= CHECK-IN / CHECK-OUT ================= */
   const checkIn = async (id) => {
@@ -149,11 +157,9 @@ export default function SecurityDashboard() {
   };
 
   /* ================= OVERSTAY ================= */
-  const isOverstay = (v) =>
-    v.allowedUntil && new Date(v.allowedUntil) < new Date();
+  const isOverstay = (v) => v.allowedUntil && new Date(v.allowedUntil) < new Date();
 
-  const overstayMinutes = (v) =>
-    Math.floor((Date.now() - new Date(v.allowedUntil)) / 60000);
+  const overstayMinutes = (v) => Math.floor((Date.now() - new Date(v.allowedUntil)) / 60000);
 
   const overstaySeverity = (mins) => {
     if (mins >= 120) return { label: "CRITICAL", color: "error" };
@@ -162,49 +168,88 @@ export default function SecurityDashboard() {
     return { label: "LOW", color: "info" };
   };
 
+  /* ================= NORMALIZE GATE ================= */
+  const normalizeGate = (gate) => {
+    if (!gate) return null;
+    if (typeof gate === "object") {
+      return gate._id || gate.name || null;
+    }
+    return String(gate);
+  };
+
   /* ================= FILTERING ================= */
   const visibleVisitors = useMemo(() => {
+    console.log("🔍 Filtering visitors...");
+    console.log("Total visitors:", visitors.length);
+    console.log("User role:", user?.role);
+    console.log("User gateId:", user?.gateId);
+
     return visitors.filter((v) => {
-      // Security: gate match
+      /* ================= GATE FILTER (SECURITY) ================= */
       if (user?.role === "security") {
-        if (!v.gate || !user.gateId) return false;
-        if (String(v.gate) !== String(user.gateId)) return false;
+        if (!user?.gateId || !v.gate) {
+          console.log("❌ Missing gate data:", { userGate: user?.gateId, visitorGate: v.gate });
+          return false;
+        }
+
+        const visitorGate = normalizeGate(v.gate);
+        const userGate = normalizeGate(user.gateId);
+
+        console.log("🔍 Comparing gates:", { visitorGate, userGate, visitor: v.name });
+
+        if (String(visitorGate) !== String(userGate)) {
+          console.log("❌ Gate mismatch");
+          return false;
+        }
       }
 
-      // Search filter
+      /* ================= SEARCH FILTER ================= */
       const matchSearch =
         !search ||
         v.name?.toLowerCase().includes(search.toLowerCase()) ||
         v.phone?.includes(search) ||
-        v.visitorId?.includes(search.toUpperCase());
+        v.visitorId?.toUpperCase().includes(search.toUpperCase());
 
-      // Tab filtering
+      /* ================= TAB FILTER ================= */
       let matchTab = true;
+
       if (tabValue === 0) {
-        matchTab = v.status === "APPROVED";
+        // Waiting / Approved
+        matchTab = ["PENDING", "APPROVED"].includes(v.status);
       } else if (tabValue === 1) {
+        // Inside / Overstay
         matchTab = ["IN", "OVERSTAY"].includes(v.status);
       } else if (tabValue === 2) {
+        // All active
         matchTab = !["OUT", "EXPIRED", "REJECTED"].includes(v.status);
       }
 
-      return matchSearch && matchTab;
+      const result = matchSearch && matchTab;
+      console.log("✅ Visitor filter result:", { name: v.name, result, matchSearch, matchTab });
+      return result;
     });
   }, [visitors, search, tabValue, user]);
 
-  /* ================= STATS ================= */
+  /* ================= STATS (FIXED) ================= */
   const stats = useMemo(() => {
-    const myVisitors = visitors.filter(
-      (v) => String(v.gate) === String(user?.gateId)
-    );
+    console.log("📊 Calculating stats...");
+
+    const myVisitors = visitors.filter((v) => {
+      if (!user?.gateId || !v.gate) return false;
+
+      const visitorGate = normalizeGate(v.gate);
+      const userGate = normalizeGate(user.gateId);
+
+      return String(visitorGate) === String(userGate);
+    });
+
+    console.log("My gate visitors:", myVisitors.length);
 
     return {
-      approved: myVisitors.filter((v) => v.status === "APPROVED").length,
+      approved: myVisitors.filter((v) => ["PENDING", "APPROVED"].includes(v.status)).length,
       inside: myVisitors.filter((v) => v.status === "IN").length,
       overstay: myVisitors.filter((v) => v.status === "OVERSTAY").length,
-      total: myVisitors.filter((v) =>
-        ["APPROVED", "IN", "OVERSTAY"].includes(v.status)
-      ).length,
+      total: myVisitors.filter((v) => ["PENDING", "APPROVED", "IN", "OVERSTAY"].includes(v.status)).length,
     };
   }, [visitors, user]);
 
@@ -225,14 +270,7 @@ export default function SecurityDashboard() {
   return (
     <Box minHeight="100vh" bgcolor="#F8FAFC" p={4}>
       {/* ================= HEADER ================= */}
-      <Stack
-        direction="row"
-        justifyContent="space-between"
-        alignItems="center"
-        mb={4}
-        flexWrap="wrap"
-        gap={2}
-      >
+      <Stack direction="row" justifyContent="space-between" alignItems="center" mb={4} flexWrap="wrap" gap={2}>
         <Stack direction="row" spacing={2} alignItems="center">
           <Avatar sx={{ bgcolor: "#2563EB", width: 56, height: 56 }}>
             <SecurityIcon />
@@ -254,16 +292,30 @@ export default function SecurityDashboard() {
             </Badge>
           </IconButton>
 
-          <Button
-            variant="outlined"
-            color="error"
-            startIcon={<LogoutIcon />}
-            onClick={logoutUser}
-          >
+          <Button variant="outlined" color="error" startIcon={<LogoutIcon />} onClick={logoutUser}>
             Logout
           </Button>
         </Stack>
       </Stack>
+
+      {/* ================= DEBUG INFO (TEMPORARY) ================= */}
+      <Paper sx={{ p: 2, mb: 3, bgcolor: "#fff3cd", border: "1px solid #ffc107" }}>
+        <Typography fontSize={13} fontWeight={600} mb={1}>
+          🔍 Debug Info:
+        </Typography>
+        <Typography fontSize={12}>
+          • User Gate: <strong>{user?.gateId || "NOT SET"}</strong>
+        </Typography>
+        <Typography fontSize={12}>
+          • Total Visitors: <strong>{visitors.length}</strong>
+        </Typography>
+        <Typography fontSize={12}>
+          • Filtered Visitors: <strong>{visibleVisitors.length}</strong>
+        </Typography>
+        <Typography fontSize={12}>
+          • User Role: <strong>{user?.role}</strong>
+        </Typography>
+      </Paper>
 
       {/* ================= STATS ================= */}
       <Grid container spacing={2} mb={3}>
@@ -321,7 +373,14 @@ export default function SecurityDashboard() {
       {/* ================= VISITOR LIST ================= */}
       {visibleVisitors.length === 0 && (
         <Paper sx={{ p: 4, textAlign: "center", borderRadius: 2 }}>
-          <Typography color="text.secondary">No visitors to display</Typography>
+          <Typography color="text.secondary">
+            {visitors.length === 0
+              ? "No visitors registered yet"
+              : "No visitors for your gate"}
+          </Typography>
+          <Typography fontSize={13} color="text.secondary" mt={1}>
+            Your gate: {user?.gateId}
+          </Typography>
         </Paper>
       )}
 
@@ -337,9 +396,7 @@ export default function SecurityDashboard() {
                 sx={{
                   p: 3,
                   borderRadius: 3,
-                  borderLeft: `6px solid ${
-                    v.status === "OVERSTAY" ? "#ef4444" : "#2563EB"
-                  }`,
+                  borderLeft: `6px solid ${v.status === "OVERSTAY" ? "#ef4444" : "#2563EB"}`,
                 }}
               >
                 <Typography variant="h6" fontWeight={600}>
@@ -358,13 +415,19 @@ export default function SecurityDashboard() {
                 </Stack>
 
                 <Stack direction="row" spacing={1} mt={1} flexWrap="wrap" gap={1}>
-                  <Chip icon={<DoorFrontIcon />} label={`Gate ${v.gate}`} size="small" />
+                  <Chip
+                    icon={<DoorFrontIcon />}
+                    label={`Gate ${typeof v.gate === "object" ? v.gate.name || v.gate._id : v.gate}`}
+                    size="small"
+                  />
                   <Chip icon={<BusinessIcon />} label={`Host: ${v.host}`} size="small" />
                   <Chip
                     label={v.status}
                     size="small"
                     color={
-                      v.status === "APPROVED"
+                      v.status === "PENDING"
+                        ? "warning"
+                        : v.status === "APPROVED"
                         ? "success"
                         : v.status === "IN"
                         ? "primary"
@@ -414,12 +477,7 @@ export default function SecurityDashboard() {
                 )}
 
                 {(v.status === "IN" || v.status === "OVERSTAY") && (
-                  <Button
-                    fullWidth
-                    variant="contained"
-                    color="error"
-                    onClick={() => checkOut(v._id)}
-                  >
+                  <Button fullWidth variant="contained" color="error" onClick={() => checkOut(v._id)}>
                     Check Out
                   </Button>
                 )}
@@ -449,18 +507,10 @@ export default function SecurityDashboard() {
             )}
 
             {alerts.map((alert) => (
-              <Card
-                key={alert._id}
-                sx={{
-                  borderLeft: `4px solid ${getSeverityColor(alert.severity)}`,
-                }}
-              >
+              <Card key={alert._id} sx={{ borderLeft: `4px solid ${getSeverityColor(alert.severity)}` }}>
                 <CardContent>
                   <Stack direction="row" spacing={1} alignItems="center" mb={1}>
-                    <WarningIcon
-                      fontSize="small"
-                      sx={{ color: getSeverityColor(alert.severity) }}
-                    />
+                    <WarningIcon fontSize="small" sx={{ color: getSeverityColor(alert.severity) }} />
                     <Chip
                       label={alert.severity}
                       size="small"

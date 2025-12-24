@@ -9,7 +9,6 @@ import {
   Stack,
   Divider,
   Avatar,
-  Grid,
   Card,
   CardContent,
   Badge,
@@ -18,6 +17,8 @@ import {
   Chip,
   Alert,
 } from "@mui/material";
+import Grid from "@mui/material/Grid";
+
 import LogoutIcon from "@mui/icons-material/Logout";
 import PersonAddIcon from "@mui/icons-material/PersonAdd";
 import PeopleIcon from "@mui/icons-material/People";
@@ -48,17 +49,11 @@ export default function ReceptionDeskDashboard() {
       transports: ["websocket", "polling"],
     });
 
-    socket.on("connect", () => {
-      console.log("✅ Reception Socket connected");
-    });
-
     socket.on("visitors:update", (data) => {
-      console.log("📡 Visitors updated via socket");
       setVisitors(data || []);
     });
 
     socket.on("alert:new", (alert) => {
-      console.log("🔔 New alert received:", alert);
       setAlerts((prev) => [alert, ...prev]);
     });
 
@@ -67,21 +62,13 @@ export default function ReceptionDeskDashboard() {
 
   /* ================= LOAD DATA ================= */
   const loadVisitors = async () => {
-    try {
-      const res = await api.get("/visitor");
-      setVisitors(res.data || []);
-    } catch (err) {
-      console.error("Failed to load visitors", err);
-    }
+    const res = await api.get("/visitor");
+    setVisitors(res.data || []);
   };
 
   const loadAlerts = async () => {
-    try {
-      const res = await api.get("/alert");
-      setAlerts(res.data || []);
-    } catch (err) {
-      console.error("Failed to load alerts", err);
-    }
+    const res = await api.get("/alert");
+    setAlerts(res.data || []);
   };
 
   useEffect(() => {
@@ -101,16 +88,6 @@ export default function ReceptionDeskDashboard() {
     };
   }, []);
 
-  /* ================= MARK ALERT AS READ ================= */
-  const markAlertAsRead = async (alertId) => {
-    try {
-      await api.patch(`/alert/${alertId}/read`);
-      setAlerts((prev) => prev.filter((a) => a._id !== alertId));
-    } catch (err) {
-      console.error("Failed to mark alert as read", err);
-    }
-  };
-
   /* ================= STATS ================= */
   const stats = useMemo(() => {
     return {
@@ -122,14 +99,12 @@ export default function ReceptionDeskDashboard() {
     };
   }, [visitors]);
 
-  /* ================= HANDLE REGISTRATION SUCCESS ================= */
   const handleRegistrationSuccess = (message) => {
     setSuccessMessage(message);
     setTimeout(() => setSuccessMessage(""), 5000);
     loadVisitors();
   };
 
-  /* ================= SEVERITY COLOR ================= */
   const getSeverityColor = (severity) => {
     switch (severity) {
       case "CRITICAL":
@@ -145,18 +120,11 @@ export default function ReceptionDeskDashboard() {
 
   return (
     <Box minHeight="100vh" p={4} bgcolor="#F8FAFC">
-      {/* ================= HEADER ================= */}
-      <Stack
-        direction="row"
-        justifyContent="space-between"
-        alignItems="center"
-        mb={4}
-        flexWrap="wrap"
-        gap={2}
-      >
-        <Stack direction="row" spacing={2} alignItems="center">
-          <Avatar sx={{ bgcolor: "#10b981", width: 56, height: 56 }}>
-            <PersonAddIcon sx={{ fontSize: 32 }} />
+      {/* HEADER */}
+      <Stack direction="row" justifyContent="space-between" mb={4}>
+        <Stack direction="row" spacing={2}>
+          <Avatar sx={{ bgcolor: "#10b981" }}>
+            <PersonAddIcon />
           </Avatar>
           <Box>
             <Typography variant="h5" fontWeight={700}>
@@ -169,183 +137,72 @@ export default function ReceptionDeskDashboard() {
         </Stack>
 
         <Stack direction="row" spacing={2}>
-          <IconButton onClick={() => setAlertDrawer(true)} color="inherit">
+          <IconButton onClick={() => setAlertDrawer(true)}>
             <Badge badgeContent={alerts.length} color="error">
               <NotificationsIcon />
             </Badge>
           </IconButton>
-
-          <Button
-            variant="outlined"
-            color="error"
-            startIcon={<LogoutIcon />}
-            onClick={logoutUser}
-          >
+          <Button color="error" onClick={logoutUser} startIcon={<LogoutIcon />}>
             Logout
           </Button>
         </Stack>
       </Stack>
 
-      {/* ================= SUCCESS MESSAGE ================= */}
       {successMessage && (
-        <Alert severity="success" sx={{ mb: 3 }} onClose={() => setSuccessMessage("")}>
+        <Alert severity="success" sx={{ mb: 3 }}>
           {successMessage}
         </Alert>
       )}
 
-      {/* ================= STATS ================= */}
+      {/* STATS */}
       <Grid container spacing={2} mb={4}>
         {[
-          { label: "Total Registered", value: stats.total, icon: <PeopleIcon />, color: "#3b82f6" },
-          { label: "Pending Approval", value: stats.pending, icon: <PendingIcon />, color: "#f59e0b" },
-          { label: "Approved", value: stats.approved, icon: <CheckCircleIcon />, color: "#10b981" },
-          { label: "Currently Inside", value: stats.inside, icon: <CheckCircleIcon />, color: "#8b5cf6" },
-          { label: "Completed", value: stats.completed, icon: <CheckCircleIcon />, color: "#06b6d4" },
-        ].map(({ label, value, icon, color }) => (
-          <Grid item xs={12} sm={6} md={2.4} key={label}>
-            <Card
-              sx={{
-                background: `linear-gradient(135deg, ${color}15 0%, ${color}05 100%)`,
-                borderLeft: `4px solid ${color}`,
-              }}
-            >
+          { label: "Total Registered", value: stats.total },
+          { label: "Pending Approval", value: stats.pending },
+          { label: "Approved", value: stats.approved },
+          { label: "Currently Inside", value: stats.inside },
+          { label: "Completed", value: stats.completed },
+        ].map(({ label, value }) => (
+          <Grid key={label} size={{ xs: 12, sm: 6, md: 2.4 }}>
+            <Card>
               <CardContent>
-                <Stack direction="row" justifyContent="space-between" alignItems="center">
-                  <Box>
-                    <Typography fontSize={13} color="text.secondary" fontWeight={500}>
-                      {label}
-                    </Typography>
-                    <Typography variant="h4" fontWeight={700} mt={1} sx={{ color }}>
-                      {value}
-                    </Typography>
-                  </Box>
-                  <Avatar sx={{ bgcolor: `${color}20`, color }}>
-                    {icon}
-                  </Avatar>
-                </Stack>
+                <Typography fontSize={13}>{label}</Typography>
+                <Typography variant="h4">{value}</Typography>
               </CardContent>
             </Card>
           </Grid>
         ))}
       </Grid>
 
-      {/* ================= MAIN CONTENT ================= */}
+      {/* MAIN CONTENT */}
       <Grid container spacing={3}>
-        {/* LEFT: REGISTRATION FORM */}
-        <Grid item xs={12} lg={5}>
-          <Paper
-            sx={{
-              p: 3,
-              borderRadius: 3,
-              background: "linear-gradient(135deg, #667eea15 0%, #764ba205 100%)",
-              border: "1px solid #e5e7eb",
-            }}
-          >
-            <Stack direction="row" alignItems="center" spacing={2} mb={2}>
-              <Avatar sx={{ bgcolor: "#667eea" }}>
-                <PersonAddIcon />
-              </Avatar>
-              <Typography variant="h6" fontWeight={600}>
-                Register New Visitor
-              </Typography>
-            </Stack>
-            <Divider sx={{ mb: 3 }} />
+        <Grid size={{ xs: 12, lg: 5 }}>
+          <Paper sx={{ p: 3 }}>
             <VisitorRegistrationForm onSuccess={handleRegistrationSuccess} />
           </Paper>
         </Grid>
 
-        {/* RIGHT: VISITOR LIST */}
-        <Grid item xs={12} lg={7}>
-          <Paper
-            sx={{
-              p: 3,
-              borderRadius: 3,
-              border: "1px solid #e5e7eb",
-            }}
-          >
-            <Stack direction="row" alignItems="center" spacing={2} mb={2}>
-              <Avatar sx={{ bgcolor: "#3b82f6" }}>
-                <PeopleIcon />
-              </Avatar>
-              <Typography variant="h6" fontWeight={600}>
-                Registered Visitors
-              </Typography>
-            </Stack>
-            <Divider sx={{ mb: 3 }} />
+        <Grid size={{ xs: 12, lg: 7 }}>
+          <Paper sx={{ p: 3 }}>
             <VisitorList visitors={visitors} onUpdate={loadVisitors} />
           </Paper>
         </Grid>
       </Grid>
 
-      {/* ================= ALERTS DRAWER ================= */}
+      {/* ALERT DRAWER */}
       <Drawer anchor="right" open={alertDrawer} onClose={() => setAlertDrawer(false)}>
         <Box width={400} p={3}>
-          <Stack direction="row" justifyContent="space-between" alignItems="center" mb={3}>
-            <Typography variant="h6" fontWeight={600}>
-              System Alerts ({alerts.length})
-            </Typography>
-            <IconButton onClick={() => setAlertDrawer(false)}>
-              <CloseIcon />
-            </IconButton>
-          </Stack>
-
-          <Stack spacing={2}>
-            {alerts.length === 0 && (
-              <Typography color="text.secondary" textAlign="center" py={4}>
-                No alerts
-              </Typography>
-            )}
-
-            {alerts.map((alert) => (
-              <Card
-                key={alert._id}
-                sx={{
-                  borderLeft: `4px solid ${getSeverityColor(alert.severity)}`,
-                }}
-              >
-                <CardContent>
-                  <Stack direction="row" spacing={1} alignItems="center" mb={1}>
-                    <WarningIcon
-                      fontSize="small"
-                      sx={{ color: getSeverityColor(alert.severity) }}
-                    />
-                    <Chip
-                      label={alert.severity}
-                      size="small"
-                      sx={{ bgcolor: `${getSeverityColor(alert.severity)}20` }}
-                    />
-                    <Chip label={alert.type} size="small" />
-                  </Stack>
-
-                  <Typography fontWeight={600} fontSize={14}>
-                    {alert.title}
-                  </Typography>
-
-                  <Typography fontSize={13} color="text.secondary" mt={1}>
-                    {alert.message}
-                  </Typography>
-
-                  {alert.visitor && (
-                    <Typography fontSize={12} color="text.secondary" mt={1}>
-                      Visitor: {alert.visitor.name} ({alert.visitor.visitorId})
-                    </Typography>
-                  )}
-
-                  <Divider sx={{ my: 1 }} />
-
-                  <Stack direction="row" justifyContent="space-between" alignItems="center">
-                    <Typography fontSize={11} color="text.secondary">
-                      {new Date(alert.createdAt).toLocaleString()}
-                    </Typography>
-
-                    <Button size="small" onClick={() => markAlertAsRead(alert._id)}>
-                      Dismiss
-                    </Button>
-                  </Stack>
-                </CardContent>
-              </Card>
-            ))}
-          </Stack>
+          {alerts.map((alert) => (
+            <Card key={alert._id} sx={{ mb: 2 }}>
+              <CardContent>
+                <Typography fontWeight={600}>{alert.title}</Typography>
+                <Typography fontSize={13}>{alert.message}</Typography>
+                <Button size="small" onClick={() => markAlertAsRead(alert._id)}>
+                  Dismiss
+                </Button>
+              </CardContent>
+            </Card>
+          ))}
         </Box>
       </Drawer>
     </Box>
