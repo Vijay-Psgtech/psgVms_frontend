@@ -1,25 +1,26 @@
 import React from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import  AuthProvider from "./context/AuthContext";
+import AuthProvider from "./context/AuthContext";
 
-// Auth pages
+/* ================= AUTH PAGES ================= */
 import Login from "./pages/Login";
 import VerifyOTP from "./pages/VerifyOTP";
 import Register from "./pages/Register";
 
-// Dashboards
+/* ================= DASHBOARDS ================= */
 import AdminDashboard from "./pages/AdminDashboard";
+import AdminOverstayDashboard from "./pages/AdminOverstayDashboard";
 import SecurityDashboard from "./pages/SecurityDashboard";
 import ReceptionDeskDashboard from "./pages/ReceptionDeskDashboard";
 
-// Visitor
-import VisitorRegistrationForm from "./components/VisitorRegistrationForm.jsx";
+/* ================= VISITOR ================= */
+import VisitorRegistrationForm from "./components/VisitorRegistrationForm";
 
-// Route guards
+/* ================= ROUTE GUARDS ================= */
 import ProtectedRoute from "./hooks/ProtectedRoute";
 import RoleRoute from "./hooks/RoleRoute";
 
-// Routes map
+/* ================= ROUTE MAP ================= */
 import dashboardRoutes from "./routes/dashboardRoutes";
 
 export default function App() {
@@ -52,6 +53,18 @@ export default function App() {
               <ProtectedRoute>
                 <RoleRoute allowedRoles={["admin"]}>
                   <AdminDashboard />
+                </RoleRoute>
+              </ProtectedRoute>
+            }
+          />
+
+          {/* -------- ADMIN OVERSTAY DASHBOARD -------- */}
+          <Route
+            path="/admin/overstay"
+            element={
+              <ProtectedRoute>
+                <RoleRoute allowedRoles={["admin"]}>
+                  <AdminOverstayDashboard />
                 </RoleRoute>
               </ProtectedRoute>
             }
