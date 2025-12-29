@@ -13,8 +13,9 @@ import AdminOverstayDashboard from "./pages/AdminOverstayDashboard";
 import SecurityDashboard from "./pages/SecurityDashboard";
 import ReceptionDeskDashboard from "./pages/ReceptionDeskDashboard";
 
-/* ================= VISITOR ================= */
-import VisitorRegistrationForm from "./components/VisitorRegistrationForm";
+/* ================= VISITOR COMPONENTS ================= */
+import VisitorBookingWebsite from "./components/VisitorBookingWebsite"; // ✅ NEW PUBLIC FORM
+import VisitorRegistrationForm from "./components/VisitorRegistrationForm"; // ✅ OLD INTERNAL FORM
 
 /* ================= ROUTE GUARDS ================= */
 import ProtectedRoute from "./hooks/ProtectedRoute";
@@ -25,30 +26,30 @@ import dashboardRoutes from "./routes/dashboardRoutes";
 
 export default function App() {
   return (
-    <AuthProvider>
-      <BrowserRouter>
+    <BrowserRouter>
+      <AuthProvider>
         <Routes>
-          {/* -------- PUBLIC ROUTES -------- */}
-          <Route path="/" element={<Navigate to="/login" replace />} />
+          {/* ========================================
+              PUBLIC ROUTES (NO PROTECTION)
+          ======================================== */}
+          
+          {/* Public Visitor Booking - Anyone can access */}
+          <Route path="/" element={<VisitorBookingWebsite />} />
+          <Route path="/book-visit" element={<VisitorBookingWebsite />} />
+          <Route path="/visitor/book" element={<VisitorBookingWebsite />} />
+          
+          {/* Staff Authentication Pages - Public */}
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/verify-otp" element={<VerifyOTP />} />
 
-          {/* -------- VISITOR REGISTRATION (RECEPTION) -------- */}
-          <Route
-            path="/visitor/register"
-            element={
-              <ProtectedRoute>
-                <RoleRoute allowedRoles={["reception"]}>
-                  <VisitorRegistrationForm />
-                </RoleRoute>
-              </ProtectedRoute>
-            }
-          />
+          {/* ========================================
+              PROTECTED ROUTES (AUTHENTICATION REQUIRED)
+          ======================================== */}
 
-          {/* -------- ADMIN DASHBOARD -------- */}
+          {/* -------- ADMIN ROUTES -------- */}
           <Route
-            path={dashboardRoutes.admin}
+            path="/admin"
             element={
               <ProtectedRoute>
                 <RoleRoute allowedRoles={["admin"]}>
@@ -58,7 +59,6 @@ export default function App() {
             }
           />
 
-          {/* -------- ADMIN OVERSTAY DASHBOARD -------- */}
           <Route
             path="/admin/overstay"
             element={
@@ -70,9 +70,9 @@ export default function App() {
             }
           />
 
-          {/* -------- SECURITY DASHBOARD -------- */}
+          {/* -------- SECURITY ROUTES -------- */}
           <Route
-            path={dashboardRoutes.security}
+            path="/security"
             element={
               <ProtectedRoute>
                 <RoleRoute allowedRoles={["security"]}>
@@ -82,9 +82,9 @@ export default function App() {
             }
           />
 
-          {/* -------- RECEPTION DASHBOARD -------- */}
+          {/* -------- RECEPTION ROUTES -------- */}
           <Route
-            path={dashboardRoutes.reception}
+            path="/reception"
             element={
               <ProtectedRoute>
                 <RoleRoute allowedRoles={["reception"]}>
@@ -94,10 +94,24 @@ export default function App() {
             }
           />
 
-          {/* -------- FALLBACK -------- */}
-          <Route path="*" element={<Navigate to="/login" replace />} />
+          {/* Internal Visitor Registration (Reception Only) */}
+          <Route
+            path="/visitor/register"
+            element={
+              <ProtectedRoute>
+                <RoleRoute allowedRoles={["reception"]}>
+                  <VisitorRegistrationForm />
+                </RoleRoute>
+              </ProtectedRoute>
+            }
+          />
+
+          {/* ========================================
+              FALLBACK ROUTE
+          ======================================== */}
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
-      </BrowserRouter>
-    </AuthProvider>
+      </AuthProvider>
+    </BrowserRouter>
   );
 }
