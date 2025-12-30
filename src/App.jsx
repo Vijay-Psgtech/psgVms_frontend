@@ -1,3 +1,5 @@
+
+
 import React from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import AuthProvider from "./context/AuthContext";
@@ -8,21 +10,19 @@ import VerifyOTP from "./pages/VerifyOTP";
 import Register from "./pages/Register";
 
 /* ================= DASHBOARDS ================= */
+import SuperAdminDashboard from "./components/SuperAdminDashboard"; // ✅ NEW
 import AdminDashboard from "./pages/AdminDashboard";
 import AdminOverstayDashboard from "./pages/AdminOverstayDashboard";
 import SecurityDashboard from "./pages/SecurityDashboard";
 import ReceptionDeskDashboard from "./pages/ReceptionDeskDashboard";
 
 /* ================= VISITOR COMPONENTS ================= */
-import VisitorBookingWebsite from "./components/VisitorBookingWebsite"; // ✅ NEW PUBLIC FORM
-import VisitorRegistrationForm from "./components/VisitorRegistrationForm"; // ✅ OLD INTERNAL FORM
+import VisitorBookingWebsite from "./components/VisitorBookingWebsite"; // ✅ PUBLIC FORM
+import VisitorRegistrationForm from "./components/VisitorRegistrationForm"; // ✅ INTERNAL FORM
 
 /* ================= ROUTE GUARDS ================= */
 import ProtectedRoute from "./hooks/ProtectedRoute";
 import RoleRoute from "./hooks/RoleRoute";
-
-/* ================= ROUTE MAP ================= */
-import dashboardRoutes from "./routes/dashboardRoutes";
 
 export default function App() {
   return (
@@ -32,12 +32,12 @@ export default function App() {
           {/* ========================================
               PUBLIC ROUTES (NO PROTECTION)
           ======================================== */}
-          
+
           {/* Public Visitor Booking - Anyone can access */}
           <Route path="/" element={<VisitorBookingWebsite />} />
           <Route path="/book-visit" element={<VisitorBookingWebsite />} />
           <Route path="/visitor/book" element={<VisitorBookingWebsite />} />
-          
+
           {/* Staff Authentication Pages - Public */}
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
@@ -47,12 +47,46 @@ export default function App() {
               PROTECTED ROUTES (AUTHENTICATION REQUIRED)
           ======================================== */}
 
+          {/* -------- SUPER ADMIN ROUTES -------- */}
+          <Route
+            path="/superadmin"
+            element={
+              <ProtectedRoute>
+                <RoleRoute allowedRoles={["superadmin"]}>
+                  <SuperAdminDashboard />
+                </RoleRoute>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/superadmin/dashboard"
+            element={
+              <ProtectedRoute>
+                <RoleRoute allowedRoles={["superadmin"]}>
+                  <SuperAdminDashboard />
+                </RoleRoute>
+              </ProtectedRoute>
+            }
+          />
+
           {/* -------- ADMIN ROUTES -------- */}
           <Route
             path="/admin"
             element={
               <ProtectedRoute>
-                <RoleRoute allowedRoles={["admin"]}>
+                <RoleRoute allowedRoles={["admin", "superadmin"]}>
+                  <AdminDashboard />
+                </RoleRoute>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/admin/dashboard"
+            element={
+              <ProtectedRoute>
+                <RoleRoute allowedRoles={["admin", "superadmin"]}>
                   <AdminDashboard />
                 </RoleRoute>
               </ProtectedRoute>
@@ -63,7 +97,7 @@ export default function App() {
             path="/admin/overstay"
             element={
               <ProtectedRoute>
-                <RoleRoute allowedRoles={["admin"]}>
+                <RoleRoute allowedRoles={["admin", "superadmin"]}>
                   <AdminOverstayDashboard />
                 </RoleRoute>
               </ProtectedRoute>
@@ -82,9 +116,31 @@ export default function App() {
             }
           />
 
+          <Route
+            path="/security/dashboard"
+            element={
+              <ProtectedRoute>
+                <RoleRoute allowedRoles={["security"]}>
+                  <SecurityDashboard />
+                </RoleRoute>
+              </ProtectedRoute>
+            }
+          />
+
           {/* -------- RECEPTION ROUTES -------- */}
           <Route
             path="/reception"
+            element={
+              <ProtectedRoute>
+                <RoleRoute allowedRoles={["reception"]}>
+                  <ReceptionDeskDashboard />
+                </RoleRoute>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/reception/dashboard"
             element={
               <ProtectedRoute>
                 <RoleRoute allowedRoles={["reception"]}>

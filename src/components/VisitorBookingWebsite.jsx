@@ -16,6 +16,12 @@ import {
   ArrowLeft,
   X,
   Home,
+  Sparkles,
+  Zap,
+  Lock,
+  Bell,
+  Users,
+  MessageSquare,
 } from "lucide-react";
 
 export default function VisitorBookingWebsite() {
@@ -53,6 +59,7 @@ export default function VisitorBookingWebsite() {
   const [errors, setErrors] = useState({});
   const [success, setSuccess] = useState(false);
   const [confirmationId, setConfirmationId] = useState("");
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
 
   const steps = ["Personal Info", "Visit Details", "Confirmation"];
 
@@ -64,6 +71,13 @@ export default function VisitorBookingWebsite() {
       date: tomorrow.toISOString().split("T")[0],
       time: "09:00",
     }));
+
+    const handleMouseMove = (e) => {
+      setMousePosition({ x: e.clientX, y: e.clientY });
+    };
+
+    window.addEventListener("mousemove", handleMouseMove);
+    return () => window.removeEventListener("mousemove", handleMouseMove);
   }, []);
 
   const handleChange = (e) => {
@@ -71,7 +85,6 @@ export default function VisitorBookingWebsite() {
     setForm((prev) => {
       const updated = { ...prev, [name]: value };
       
-      // Auto-fill host email when host is selected
       if (name === "host") {
         const selectedEmployee = employees.find((emp) => emp.name === value);
         if (selectedEmployee) {
@@ -159,8 +172,6 @@ export default function VisitorBookingWebsite() {
         vehicleNumber: form.vehicleNumber || "",
       };
 
-      console.log("Submitting payload:", payload);
-
       const res = await fetch("http://localhost:5000/api/visitor/public-create", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -177,7 +188,6 @@ export default function VisitorBookingWebsite() {
       setSuccess(true);
       setActiveStep(2);
     } catch (err) {
-      console.error("Booking error:", err);
       setError(err.message || "Booking failed. Please try again.");
     } finally {
       setLoading(false);
@@ -219,521 +229,658 @@ export default function VisitorBookingWebsite() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
-      {/* Hero Section */}
-      <div className="bg-gradient-to-r from-purple-600 via-purple-700 to-indigo-800 text-white py-16">
-        <div className="max-w-6xl mx-auto px-4">
-          <div className="flex justify-end mb-4">
+    <div className="min-h-screen bg-slate-950 text-white relative overflow-hidden">
+      {/* Animated Background */}
+      <div className="fixed inset-0 bg-gradient-to-br from-violet-950 via-slate-900 to-cyan-950"></div>
+      
+      {/* Animated Mesh Gradient */}
+      <div 
+        className="fixed inset-0 opacity-30"
+        style={{
+          background: `radial-gradient(circle at ${mousePosition.x}px ${mousePosition.y}px, rgba(139, 92, 246, 0.15) 0%, transparent 50%)`
+        }}
+      ></div>
+
+      {/* Grid Pattern */}
+      <div 
+        className="fixed inset-0 opacity-10"
+        style={{
+          backgroundImage: `linear-gradient(rgba(139, 92, 246, 0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(139, 92, 246, 0.1) 1px, transparent 1px)`,
+          backgroundSize: '50px 50px'
+        }}
+      ></div>
+
+      {/* Floating Orbs */}
+      <div className="fixed top-20 left-20 w-72 h-72 bg-violet-500 rounded-full blur-3xl opacity-20 animate-pulse"></div>
+      <div className="fixed bottom-20 right-20 w-96 h-96 bg-cyan-500 rounded-full blur-3xl opacity-20 animate-pulse" style={{ animationDelay: '1s' }}></div>
+
+      <div className="relative z-10">
+        {/* Glassmorphic Navbar */}
+        <nav className="fixed top-0 left-0 right-0 z-50 backdrop-blur-xl bg-slate-900/50 border-b border-white/10">
+          <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-gradient-to-br from-violet-500 to-cyan-500 rounded-xl flex items-center justify-center">
+                <Shield className="w-6 h-6" />
+              </div>
+              <div>
+                <h1 className="text-xl font-bold bg-gradient-to-r from-violet-400 to-cyan-400 bg-clip-text text-transparent">
+                  VPASS
+                </h1>
+                <p className="text-xs text-slate-400">Visitor Management</p>
+              </div>
+            </div>
             <button
               onClick={handleStaffLogin}
-              className="bg-white/20 hover:bg-white/30 px-4 py-2 rounded-lg font-medium transition flex items-center gap-2"
+              className="group relative px-6 py-2.5 bg-white/5 hover:bg-white/10 border border-white/20 rounded-full font-medium transition-all duration-300 flex items-center gap-2 overflow-hidden"
             >
-              <Home className="w-4 h-4" />
-              Staff Login
+              <div className="absolute inset-0 bg-gradient-to-r from-violet-600 to-cyan-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+              <Home className="w-4 h-4 relative z-10" />
+              <span className="relative z-10">Staff Login</span>
             </button>
           </div>
-          <div className="text-center space-y-4">
-            <Calendar className="w-16 h-16 mx-auto" />
-            <h1 className="text-5xl font-bold">Visitor Appointment Booking</h1>
-            <p className="text-xl opacity-90">
-              Schedule your visit in advance - No need to come to campus
-            </p>
-            <div className="flex flex-wrap justify-center gap-4 mt-6">
-              <div className="flex items-center gap-2 bg-white/20 px-4 py-2 rounded-full">
-                <Shield className="w-5 h-5" />
-                <span>Secure & Verified</span>
+        </nav>
+
+        {/* Hero Section */}
+        <div className="pt-32 pb-20 px-6">
+          <div className="max-w-7xl mx-auto">
+            <div className="text-center space-y-8">
+              {/* Badge */}
+              <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/5 backdrop-blur-sm border border-white/10 rounded-full text-sm">
+                <Sparkles className="w-4 h-4 text-violet-400" />
+                <span className="text-slate-300">Next-Generation Visitor Experience</span>
               </div>
-              <div className="flex items-center gap-2 bg-white/20 px-4 py-2 rounded-full">
-                <Clock className="w-5 h-5" />
-                <span>24/7 Booking</span>
-              </div>
-              <div className="flex items-center gap-2 bg-white/20 px-4 py-2 rounded-full">
-                <CheckCircle className="w-5 h-5" />
-                <span>Email Confirmation</span>
+
+              {/* Main Heading */}
+              <h1 className="text-6xl md:text-7xl lg:text-8xl font-black tracking-tight">
+                <span className="block bg-gradient-to-r from-white via-violet-200 to-cyan-200 bg-clip-text text-transparent">
+                  Book Your Visit
+                </span>
+                <span className="block text-slate-400 text-4xl md:text-5xl lg:text-6xl mt-4">
+                  Seamlessly & Instantly
+                </span>
+              </h1>
+
+              <p className="text-xl text-slate-400 max-w-2xl mx-auto">
+                Skip the queues, schedule ahead. Our AI-powered system ensures a frictionless entry experience.
+              </p>
+
+              {/* Feature Pills */}
+              <div className="flex flex-wrap justify-center gap-4 pt-6">
+                {[
+                  { icon: Zap, text: "Instant Approval" },
+                  { icon: Lock, text: "Secure Access" },
+                  { icon: Bell, text: "Real-time Alerts" },
+                  { icon: Users, text: "Host Notification" },
+                ].map((feature, idx) => (
+                  <div
+                    key={idx}
+                    className="group relative px-6 py-3 bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl hover:border-violet-500/50 transition-all duration-300 cursor-default"
+                  >
+                    <div className="absolute inset-0 bg-gradient-to-r from-violet-600/20 to-cyan-600/20 opacity-0 group-hover:opacity-100 rounded-2xl transition-opacity duration-300"></div>
+                    <div className="relative flex items-center gap-2">
+                      <feature.icon className="w-5 h-5 text-violet-400" />
+                      <span className="font-medium">{feature.text}</span>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
         </div>
-      </div>
 
-      <div className="max-w-4xl mx-auto px-4 py-8">
-        {/* Info Cards */}
-        {activeStep === 0 && (
-          <div className="grid md:grid-cols-3 gap-4 mb-8">
-            <div className="bg-white p-6 rounded-xl shadow-md text-center">
-              <Info className="w-12 h-12 text-purple-600 mx-auto mb-3" />
-              <h3 className="font-semibold text-lg mb-2">Easy Booking</h3>
-              <p className="text-sm text-gray-600">
-                Fill out a simple form to schedule your visit
-              </p>
+        {/* Main Content */}
+        <div className="max-w-6xl mx-auto px-6 pb-20">
+          {/* Info Cards - Only on Step 0 */}
+          {activeStep === 0 && (
+            <div className="grid md:grid-cols-3 gap-6 mb-12">
+              {[
+                {
+                  icon: MessageSquare,
+                  title: "Simple Process",
+                  desc: "3-step booking with real-time validation",
+                  gradient: "from-violet-500 to-purple-500"
+                },
+                {
+                  icon: Bell,
+                  title: "Instant Notification",
+                  desc: "Email & SMS alerts for you and your host",
+                  gradient: "from-cyan-500 to-blue-500"
+                },
+                {
+                  icon: Shield,
+                  title: "Fast-Track Entry",
+                  desc: "QR code access at your selected gate",
+                  gradient: "from-pink-500 to-rose-500"
+                },
+              ].map((card, idx) => (
+                <div
+                  key={idx}
+                  className="group relative p-8 bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl hover:border-white/20 transition-all duration-500 overflow-hidden"
+                >
+                  <div className={`absolute inset-0 bg-gradient-to-br ${card.gradient} opacity-0 group-hover:opacity-10 transition-opacity duration-500`}></div>
+                  <div className="relative">
+                    <div className={`inline-flex p-4 bg-gradient-to-br ${card.gradient} rounded-2xl mb-4`}>
+                      <card.icon className="w-8 h-8" />
+                    </div>
+                    <h3 className="text-2xl font-bold mb-3">{card.title}</h3>
+                    <p className="text-slate-400 leading-relaxed">{card.desc}</p>
+                  </div>
+                </div>
+              ))}
             </div>
-            <div className="bg-white p-6 rounded-xl shadow-md text-center">
-              <Mail className="w-12 h-12 text-purple-600 mx-auto mb-3" />
-              <h3 className="font-semibold text-lg mb-2">Email Confirmation</h3>
-              <p className="text-sm text-gray-600">
-                Receive instant confirmation and approval notification
-              </p>
-            </div>
-            <div className="bg-white p-6 rounded-xl shadow-md text-center">
-              <Shield className="w-12 h-12 text-purple-600 mx-auto mb-3" />
-              <h3 className="font-semibold text-lg mb-2">Quick Entry</h3>
-              <p className="text-sm text-gray-600">
-                Fast-track entry with your booking reference
-              </p>
-            </div>
-          </div>
-        )}
+          )}
 
-        {/* Main Form */}
-        <div className="bg-white rounded-xl shadow-lg p-8">
-          {/* Stepper */}
-          <div className="flex justify-between mb-8">
-            {steps.map((step, idx) => (
-              <div key={step} className="flex items-center flex-1">
-                <div className="flex flex-col items-center flex-1">
-                  <div
-                    className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold ${
-                      idx <= activeStep
-                        ? "bg-purple-600 text-white"
-                        : "bg-gray-200 text-gray-500"
-                    }`}
-                  >
-                    {idx < activeStep ? (
-                      <CheckCircle className="w-6 h-6" />
-                    ) : (
-                      idx + 1
+          {/* Main Form Card */}
+          <div className="relative p-1 rounded-3xl bg-gradient-to-br from-violet-500/20 via-transparent to-cyan-500/20">
+            <div className="bg-slate-900/90 backdrop-blur-2xl rounded-3xl p-8 md:p-12 border border-white/10">
+              {/* Progress Steps */}
+              <div className="flex justify-between mb-12">
+                {steps.map((step, idx) => (
+                  <div key={step} className="flex items-center flex-1">
+                    <div className="flex flex-col items-center flex-1 gap-3">
+                      <div
+                        className={`relative w-14 h-14 rounded-2xl flex items-center justify-center font-bold text-lg transition-all duration-500 ${
+                          idx <= activeStep
+                            ? "bg-gradient-to-br from-violet-500 to-cyan-500 shadow-lg shadow-violet-500/50"
+                            : "bg-white/5 border border-white/10"
+                        }`}
+                      >
+                        {idx < activeStep ? (
+                          <CheckCircle className="w-7 h-7" />
+                        ) : (
+                          idx + 1
+                        )}
+                        {idx === activeStep && (
+                          <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-violet-500 to-cyan-500 animate-pulse opacity-50"></div>
+                        )}
+                      </div>
+                      <span className={`text-sm font-semibold transition-colors hidden sm:block ${
+                        idx <= activeStep ? "text-white" : "text-slate-500"
+                      }`}>
+                        {step}
+                      </span>
+                    </div>
+                    {idx < steps.length - 1 && (
+                      <div className={`h-1 flex-1 mx-4 rounded-full transition-all duration-500 ${
+                        idx < activeStep 
+                          ? "bg-gradient-to-r from-violet-500 to-cyan-500" 
+                          : "bg-white/10"
+                      }`} />
                     )}
                   </div>
-                  <span className="text-sm mt-2 hidden sm:block">{step}</span>
+                ))}
+              </div>
+
+              {/* Error Alert */}
+              {error && (
+                <div className="mb-8 p-4 bg-red-500/10 border border-red-500/50 rounded-2xl backdrop-blur-sm flex items-start gap-3">
+                  <AlertCircle className="w-6 h-6 text-red-400 shrink-0 mt-0.5" />
+                  <div className="flex-1 text-red-200">{error}</div>
+                  <button onClick={() => setError("")} className="text-red-400 hover:text-red-300">
+                    <X className="w-5 h-5" />
+                  </button>
                 </div>
-                {idx < steps.length - 1 && (
-                  <div
-                    className={`h-1 flex-1 mx-2 ${
-                      idx < activeStep ? "bg-purple-600" : "bg-gray-200"
-                    }`}
-                  />
-                )}
-              </div>
-            ))}
-          </div>
+              )}
 
-          {/* Error Alert */}
-          {error && (
-            <div className="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg mb-6 flex items-start gap-2">
-              <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
-              <div className="flex-1">{error}</div>
-              <button onClick={() => setError("")} className="text-red-600">
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-          )}
-
-          {/* Step 0: Personal Info */}
-          {activeStep === 0 && (
-            <div className="space-y-6">
-              <div>
-                <h2 className="text-2xl font-bold mb-2">Tell us about yourself</h2>
-                <div className="h-1 w-20 bg-purple-600 rounded"></div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-2">
-                  Full Name <span className="text-red-500">*</span>
-                </label>
-                <div className="relative">
-                  <User className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
-                  <input
-                    type="text"
-                    name="name"
-                    value={form.name}
-                    onChange={handleChange}
-                    className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-purple-500 outline-none ${
-                      errors.name ? "border-red-500" : "border-gray-300"
-                    }`}
-                    placeholder="Enter your full name"
-                  />
-                </div>
-                {errors.name && (
-                  <p className="text-red-500 text-sm mt-1">{errors.name}</p>
-                )}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-2">
-                  Email Address <span className="text-red-500">*</span>
-                </label>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
-                  <input
-                    type="email"
-                    name="email"
-                    value={form.email}
-                    onChange={handleChange}
-                    className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-purple-500 outline-none ${
-                      errors.email ? "border-red-500" : "border-gray-300"
-                    }`}
-                    placeholder="your.email@example.com"
-                  />
-                </div>
-                {errors.email ? (
-                  <p className="text-red-500 text-sm mt-1">{errors.email}</p>
-                ) : (
-                  <p className="text-gray-500 text-sm mt-1">
-                    We'll send confirmation to this email
-                  </p>
-                )}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-2">
-                  Phone Number <span className="text-red-500">*</span>
-                </label>
-                <div className="relative">
-                  <Phone className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
-                  <input
-                    type="tel"
-                    name="phone"
-                    value={form.phone}
-                    onChange={handleChange}
-                    maxLength={10}
-                    className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-purple-500 outline-none ${
-                      errors.phone ? "border-red-500" : "border-gray-300"
-                    }`}
-                    placeholder="10 digit mobile number"
-                  />
-                </div>
-                {errors.phone && (
-                  <p className="text-red-500 text-sm mt-1">{errors.phone}</p>
-                )}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-2">
-                  Company/Organization
-                </label>
-                <div className="relative">
-                  <Building className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
-                  <input
-                    type="text"
-                    name="company"
-                    value={form.company}
-                    onChange={handleChange}
-                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
-                    placeholder="Optional"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-2">
-                  Vehicle Number
-                </label>
-                <div className="relative">
-                  <Car className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
-                  <input
-                    type="text"
-                    name="vehicleNumber"
-                    value={form.vehicleNumber}
-                    onChange={handleChange}
-                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
-                    placeholder="e.g., TN01AB1234"
-                  />
-                </div>
-              </div>
-
-              <div className="flex justify-end pt-4">
-                <button
-                  onClick={handleNext}
-                  className="bg-purple-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-purple-700 transition flex items-center gap-2"
-                >
-                  Next <ArrowRight className="w-5 h-5" />
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* Step 1: Visit Details */}
-          {activeStep === 1 && (
-            <div className="space-y-6">
-              <div>
-                <h2 className="text-2xl font-bold mb-2">Visit Details</h2>
-                <div className="h-1 w-20 bg-purple-600 rounded"></div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-2">
-                  Purpose of Visit <span className="text-red-500">*</span>
-                </label>
-                <textarea
-                  name="purpose"
-                  value={form.purpose}
-                  onChange={handleChange}
-                  rows={3}
-                  className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-purple-500 outline-none ${
-                    errors.purpose ? "border-red-500" : "border-gray-300"
-                  }`}
-                  placeholder="Brief description of your visit"
-                />
-                {errors.purpose && (
-                  <p className="text-red-500 text-sm mt-1">{errors.purpose}</p>
-                )}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-2">
-                  Person to Meet (Host) <span className="text-red-500">*</span>
-                </label>
-                <select
-                  name="host"
-                  value={form.host}
-                  onChange={handleChange}
-                  className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-purple-500 outline-none ${
-                    errors.host ? "border-red-500" : "border-gray-300"
-                  }`}
-                >
-                  <option value="">-- Select Host --</option>
-                  {employees.map((e) => (
-                    <option key={e.id} value={e.name}>
-                      {e.name} — {e.department}
-                    </option>
-                  ))}
-                </select>
-                {errors.host && (
-                  <p className="text-red-500 text-sm mt-1">{errors.host}</p>
-                )}
-                {form.host && selectedHost && (
-                  <p className="text-sm text-gray-600 mt-1">
-                    📧 Approval request will be sent to: {selectedHost.email}
-                  </p>
-                )}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-2">
-                  Entry Gate <span className="text-red-500">*</span>
-                </label>
-                <div className="relative">
-                  <MapPin className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
-                  <select
-                    name="gate"
-                    value={form.gate}
-                    onChange={handleChange}
-                    className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-purple-500 outline-none ${
-                      errors.gate ? "border-red-500" : "border-gray-300"
-                    }`}
-                  >
-                    <option value="">-- Select Gate --</option>
-                    {gates.map((g) => (
-                      <option key={g.id} value={g.id}>
-                        {g.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                {errors.gate && (
-                  <p className="text-red-500 text-sm mt-1">{errors.gate}</p>
-                )}
-              </div>
-
-              <div className="grid md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium mb-2">
-                    Visit Date <span className="text-red-500">*</span>
-                  </label>
-                  <div className="relative">
-                    <Calendar className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
-                    <input
-                      type="date"
-                      name="date"
-                      value={form.date}
-                      onChange={handleChange}
-                      min={new Date().toISOString().split("T")[0]}
-                      className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-purple-500 outline-none ${
-                        errors.date ? "border-red-500" : "border-gray-300"
-                      }`}
-                    />
+              {/* Step 0: Personal Info */}
+              {activeStep === 0 && (
+                <div className="space-y-6">
+                  <div className="mb-8">
+                    <h2 className="text-4xl font-bold mb-3 bg-gradient-to-r from-violet-400 to-cyan-400 bg-clip-text text-transparent">
+                      Tell us about yourself
+                    </h2>
+                    <p className="text-slate-400">We need some basic information to get started</p>
                   </div>
-                  {errors.date && (
-                    <p className="text-red-500 text-sm mt-1">{errors.date}</p>
-                  )}
-                </div>
 
-                <div>
-                  <label className="block text-sm font-medium mb-2">
-                    Visit Time <span className="text-red-500">*</span>
-                  </label>
-                  <div className="relative">
-                    <Clock className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
-                    <input
-                      type="time"
-                      name="time"
-                      value={form.time}
-                      onChange={handleChange}
-                      className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-purple-500 outline-none ${
-                        errors.time ? "border-red-500" : "border-gray-300"
-                      }`}
-                    />
+                  <div className="grid md:grid-cols-2 gap-6">
+                    <div className="md:col-span-2">
+                      <label className="block text-sm font-semibold mb-3 text-slate-300">
+                        Full Name <span className="text-red-400">*</span>
+                      </label>
+                      <div className="relative group">
+                        <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500 group-focus-within:text-violet-400 transition-colors" />
+                        <input
+                          type="text"
+                          name="name"
+                          value={form.name}
+                          onChange={handleChange}
+                          className={`w-full pl-12 pr-4 py-4 bg-white/5 border ${
+                            errors.name ? "border-red-500/50" : "border-white/10"
+                          } rounded-2xl focus:outline-none focus:border-violet-500 focus:bg-white/10 transition-all text-white placeholder-slate-500`}
+                          placeholder="John Doe"
+                        />
+                      </div>
+                      {errors.name && (
+                        <p className="text-red-400 text-sm mt-2 flex items-center gap-1">
+                          <AlertCircle className="w-4 h-4" /> {errors.name}
+                        </p>
+                      )}
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-semibold mb-3 text-slate-300">
+                        Email Address <span className="text-red-400">*</span>
+                      </label>
+                      <div className="relative group">
+                        <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500 group-focus-within:text-violet-400 transition-colors" />
+                        <input
+                          type="email"
+                          name="email"
+                          value={form.email}
+                          onChange={handleChange}
+                          className={`w-full pl-12 pr-4 py-4 bg-white/5 border ${
+                            errors.email ? "border-red-500/50" : "border-white/10"
+                          } rounded-2xl focus:outline-none focus:border-violet-500 focus:bg-white/10 transition-all text-white placeholder-slate-500`}
+                          placeholder="john@example.com"
+                        />
+                      </div>
+                      {errors.email ? (
+                        <p className="text-red-400 text-sm mt-2 flex items-center gap-1">
+                          <AlertCircle className="w-4 h-4" /> {errors.email}
+                        </p>
+                      ) : (
+                        <p className="text-slate-500 text-sm mt-2">Confirmation will be sent here</p>
+                      )}
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-semibold mb-3 text-slate-300">
+                        Phone Number <span className="text-red-400">*</span>
+                      </label>
+                      <div className="relative group">
+                        <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500 group-focus-within:text-violet-400 transition-colors" />
+                        <input
+                          type="tel"
+                          name="phone"
+                          value={form.phone}
+                          onChange={handleChange}
+                          maxLength={10}
+                          className={`w-full pl-12 pr-4 py-4 bg-white/5 border ${
+                            errors.phone ? "border-red-500/50" : "border-white/10"
+                          } rounded-2xl focus:outline-none focus:border-violet-500 focus:bg-white/10 transition-all text-white placeholder-slate-500`}
+                          placeholder="9876543210"
+                        />
+                      </div>
+                      {errors.phone && (
+                        <p className="text-red-400 text-sm mt-2 flex items-center gap-1">
+                          <AlertCircle className="w-4 h-4" /> {errors.phone}
+                        </p>
+                      )}
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-semibold mb-3 text-slate-300">
+                        Company/Organization
+                      </label>
+                      <div className="relative group">
+                        <Building className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500 group-focus-within:text-violet-400 transition-colors" />
+                        <input
+                          type="text"
+                          name="company"
+                          value={form.company}
+                          onChange={handleChange}
+                          className="w-full pl-12 pr-4 py-4 bg-white/5 border border-white/10 rounded-2xl focus:outline-none focus:border-violet-500 focus:bg-white/10 transition-all text-white placeholder-slate-500"
+                          placeholder="Optional"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-semibold mb-3 text-slate-300">
+                        Vehicle Number
+                      </label>
+                      <div className="relative group">
+                        <Car className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500 group-focus-within:text-violet-400 transition-colors" />
+                        <input
+                          type="text"
+                          name="vehicleNumber"
+                          value={form.vehicleNumber}
+                          onChange={handleChange}
+                          className="w-full pl-12 pr-4 py-4 bg-white/5 border border-white/10 rounded-2xl focus:outline-none focus:border-violet-500 focus:bg-white/10 transition-all text-white placeholder-slate-500"
+                          placeholder="TN01AB1234"
+                        />
+                      </div>
+                    </div>
                   </div>
-                  {errors.time && (
-                    <p className="text-red-500 text-sm mt-1">{errors.time}</p>
-                  )}
-                </div>
-              </div>
 
-              <div>
-                <label className="block text-sm font-medium mb-2">
-                  Expected Duration
-                </label>
-                <select
-                  name="expectedDuration"
-                  value={form.expectedDuration}
-                  onChange={handleChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
-                >
-                  <option value="30">30 minutes</option>
-                  <option value="60">1 hour</option>
-                  <option value="120">2 hours</option>
-                  <option value="180">3 hours</option>
-                  <option value="240">4 hours</option>
-                  <option value="480">Full day (8 hours)</option>
-                </select>
-              </div>
-
-              {form.date && form.time && (
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                  <p className="text-sm font-semibold text-blue-900 mb-2">
-                    📅 Your Visit Schedule
-                  </p>
-                  <div className="flex flex-wrap items-center gap-2 text-sm">
-                    <span className="bg-white px-3 py-1 rounded-full">
-                      Entry: {new Date(`${form.date}T${form.time}`).toLocaleString()}
-                    </span>
-                    <span>→</span>
-                    <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full">
-                      Valid until: {getAllowedUntil()}
-                    </span>
+                  <div className="flex justify-end pt-6">
+                    <button
+                      onClick={handleNext}
+                      className="group relative px-8 py-4 bg-gradient-to-r from-violet-600 to-cyan-600 rounded-2xl font-bold text-lg hover:shadow-xl hover:shadow-violet-500/50 transition-all duration-300 flex items-center gap-3 overflow-hidden"
+                    >
+                      <span className="relative z-10">Continue</span>
+                      <ArrowRight className="w-6 h-6 relative z-10 group-hover:translate-x-1 transition-transform" />
+                      <div className="absolute inset-0 bg-gradient-to-r from-cyan-600 to-violet-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                    </button>
                   </div>
                 </div>
               )}
 
-              <div className="flex justify-between pt-4">
-                <button
-                  onClick={handleBack}
-                  className="px-6 py-3 border border-gray-300 rounded-lg font-semibold hover:bg-gray-50 transition flex items-center gap-2"
-                >
-                  <ArrowLeft className="w-5 h-5" /> Back
-                </button>
-                <button
-                  onClick={handleSubmit}
-                  disabled={loading}
-                  className="bg-purple-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-purple-700 transition disabled:opacity-50 flex items-center gap-2"
-                >
-                  {loading ? (
-                    <>
-                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                      Submitting...
-                    </>
-                  ) : (
-                    <>
-                      Submit Request <CheckCircle className="w-5 h-5" />
-                    </>
+              {/* Step 1: Visit Details */}
+              {activeStep === 1 && (
+                <div className="space-y-6">
+                  <div className="mb-8">
+                    <h2 className="text-4xl font-bold mb-3 bg-gradient-to-r from-violet-400 to-cyan-400 bg-clip-text text-transparent">
+                      Visit Details
+                    </h2>
+                    <p className="text-slate-400">When and where are you planning to visit?</p>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold mb-3 text-slate-300">
+                      Purpose of Visit <span className="text-red-400">*</span>
+                    </label>
+                    <textarea
+                      name="purpose"
+                      value={form.purpose}
+                      onChange={handleChange}
+                      rows={4}
+                      className={`w-full px-4 py-4 bg-white/5 border ${
+                        errors.purpose ? "border-red-500/50" : "border-white/10"
+                      } rounded-2xl focus:outline-none focus:border-violet-500 focus:bg-white/10 transition-all text-white placeholder-slate-500 resize-none`}
+                      placeholder="Brief description of your visit purpose..."
+                    />
+                    {errors.purpose && (
+                      <p className="text-red-400 text-sm mt-2 flex items-center gap-1">
+                        <AlertCircle className="w-4 h-4" /> {errors.purpose}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="grid md:grid-cols-2 gap-6">
+                    <div>
+                      <label className="block text-sm font-semibold mb-3 text-slate-300">
+                        Person to Meet (Host) <span className="text-red-400">*</span>
+                      </label>
+                      <select
+                        name="host"
+                        value={form.host}
+                        onChange={handleChange}
+                        className={`w-full px-4 py-4 bg-white/5 border ${
+                          errors.host ? "border-red-500/50" : "border-white/10"
+                        } rounded-2xl focus:outline-none focus:border-violet-500 focus:bg-white/10 transition-all text-white`}
+                      >
+                        <option value="" className="bg-slate-800">Select Host</option>
+                        {employees.map((e) => (
+                          <option key={e.id} value={e.name} className="bg-slate-800">
+                            {e.name} — {e.department}
+                          </option>
+                        ))}
+                      </select>
+                      {errors.host && (
+                        <p className="text-red-400 text-sm mt-2 flex items-center gap-1">
+                          <AlertCircle className="w-4 h-4" /> {errors.host}
+                        </p>
+                      )}
+                      {form.host && selectedHost && (
+                        <div className="mt-3 p-3 bg-violet-500/10 border border-violet-500/30 rounded-xl">
+                          <p className="text-sm text-violet-300">
+                            📧 Approval request → {selectedHost.email}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-semibold mb-3 text-slate-300">
+                        Entry Gate <span className="text-red-400">*</span>
+                      </label>
+                      <div className="relative group">
+                        <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500 group-focus-within:text-violet-400 transition-colors z-10" />
+                        <select
+                          name="gate"
+                          value={form.gate}
+                          onChange={handleChange}
+                          className={`w-full pl-12 pr-4 py-4 bg-white/5 border ${
+                            errors.gate ? "border-red-500/50" : "border-white/10"
+                          } rounded-2xl focus:outline-none focus:border-violet-500 focus:bg-white/10 transition-all text-white`}
+                        >
+                          <option value="" className="bg-slate-800">Select Gate</option>
+                          {gates.map((g) => (
+                            <option key={g.id} value={g.id} className="bg-slate-800">
+                              {g.name}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      {errors.gate && (
+                        <p className="text-red-400 text-sm mt-2 flex items-center gap-1">
+                          <AlertCircle className="w-4 h-4" /> {errors.gate}
+                        </p>
+                      )}
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-semibold mb-3 text-slate-300">
+                        Visit Date <span className="text-red-400">*</span>
+                      </label>
+                      <div className="relative group">
+                        <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500 group-focus-within:text-violet-400 transition-colors z-10" />
+                        <input
+                          type="date"
+                          name="date"
+                          value={form.date}
+                          onChange={handleChange}
+                          min={new Date().toISOString().split("T")[0]}
+                          className={`w-full pl-12 pr-4 py-4 bg-white/5 border ${
+                            errors.date ? "border-red-500/50" : "border-white/10"
+                          } rounded-2xl focus:outline-none focus:border-violet-500 focus:bg-white/10 transition-all text-white`}
+                        />
+                      </div>
+                      {errors.date && (
+                        <p className="text-red-400 text-sm mt-2 flex items-center gap-1">
+                          <AlertCircle className="w-4 h-4" /> {errors.date}
+                        </p>
+                      )}
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-semibold mb-3 text-slate-300">
+                        Visit Time <span className="text-red-400">*</span>
+                      </label>
+                      <div className="relative group">
+                        <Clock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500 group-focus-within:text-violet-400 transition-colors z-10" />
+                        <input
+                          type="time"
+                          name="time"
+                          value={form.time}
+                          onChange={handleChange}
+                          className={`w-full pl-12 pr-4 py-4 bg-white/5 border ${
+                            errors.time ? "border-red-500/50" : "border-white/10"
+                          } rounded-2xl focus:outline-none focus:border-violet-500 focus:bg-white/10 transition-all text-white`}
+                        />
+                      </div>
+                      {errors.time && (
+                        <p className="text-red-400 text-sm mt-2 flex items-center gap-1">
+                          <AlertCircle className="w-4 h-4" /> {errors.time}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold mb-3 text-slate-300">
+                      Expected Duration
+                    </label>
+                    <select
+                      name="expectedDuration"
+                      value={form.expectedDuration}
+                      onChange={handleChange}
+                      className="w-full px-4 py-4 bg-white/5 border border-white/10 rounded-2xl focus:outline-none focus:border-violet-500 focus:bg-white/10 transition-all text-white"
+                    >
+                      <option value="30" className="bg-slate-800">30 minutes</option>
+                      <option value="60" className="bg-slate-800">1 hour</option>
+                      <option value="120" className="bg-slate-800">2 hours</option>
+                      <option value="180" className="bg-slate-800">3 hours</option>
+                      <option value="240" className="bg-slate-800">4 hours</option>
+                      <option value="480" className="bg-slate-800">Full day (8 hours)</option>
+                    </select>
+                  </div>
+
+                  {form.date && form.time && (
+                    <div className="p-6 bg-gradient-to-br from-violet-500/10 to-cyan-500/10 border border-violet-500/30 rounded-2xl backdrop-blur-sm">
+                      <p className="text-sm font-bold text-violet-300 mb-3 flex items-center gap-2">
+                        <Calendar className="w-5 h-5" />
+                        Your Visit Schedule
+                      </p>
+                      <div className="flex flex-wrap items-center gap-3">
+                        <div className="px-4 py-2 bg-white/10 rounded-xl backdrop-blur-sm">
+                          <span className="text-sm text-slate-300">Entry: </span>
+                          <span className="font-semibold text-white">
+                            {new Date(`${form.date}T${form.time}`).toLocaleString()}
+                          </span>
+                        </div>
+                        <ArrowRight className="w-5 h-5 text-slate-500" />
+                        <div className="px-4 py-2 bg-gradient-to-r from-green-500/20 to-emerald-500/20 border border-green-500/30 rounded-xl backdrop-blur-sm">
+                          <span className="text-sm text-green-300">Valid until: </span>
+                          <span className="font-semibold text-green-200">
+                            {getAllowedUntil()}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
                   )}
-                </button>
-              </div>
-            </div>
-          )}
 
-          {/* Step 2: Confirmation */}
-          {activeStep === 2 && success && (
-            <div className="space-y-6 text-center">
-              <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto">
-                <CheckCircle className="w-12 h-12 text-green-600" />
-              </div>
-              <h2 className="text-3xl font-bold text-green-600">
-                Request Submitted Successfully!
-              </h2>
-              <p className="text-gray-600">
-                Your visitor request has been submitted for approval. A confirmation email
-                will be sent to both you and your host once approved.
-              </p>
-
-              <div className="bg-gray-50 rounded-lg p-6 text-left">
-                <h3 className="text-lg font-semibold mb-4">Booking Details</h3>
-                <div className="grid md:grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <p className="text-gray-500">Request ID</p>
-                    <p className="font-semibold">{confirmationId}</p>
-                  </div>
-                  <div>
-                    <p className="text-gray-500">Visitor Name</p>
-                    <p className="font-semibold">{form.name}</p>
-                  </div>
-                  <div>
-                    <p className="text-gray-500">Visit Date & Time</p>
-                    <p className="font-semibold">
-                      {new Date(`${form.date}T${form.time}`).toLocaleString()}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-gray-500">Host</p>
-                    <p className="font-semibold">{form.host}</p>
-                  </div>
-                  <div>
-                    <p className="text-gray-500">Entry Gate</p>
-                    <p className="font-semibold">
-                      {gates.find((g) => g.id === form.gate)?.name}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-gray-500">Status</p>
-                    <p className="font-semibold text-orange-600">Pending Approval</p>
+                  <div className="flex justify-between pt-6">
+                    <button
+                      onClick={handleBack}
+                      className="px-6 py-4 bg-white/5 border border-white/10 rounded-2xl font-semibold hover:bg-white/10 transition-all flex items-center gap-2"
+                    >
+                      <ArrowLeft className="w-5 h-5" />
+                      Back
+                    </button>
+                    <button
+                      onClick={handleSubmit}
+                      disabled={loading}
+                      className="group relative px-8 py-4 bg-gradient-to-r from-violet-600 to-cyan-600 rounded-2xl font-bold text-lg hover:shadow-xl hover:shadow-violet-500/50 transition-all duration-300 flex items-center gap-3 overflow-hidden disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {loading ? (
+                        <>
+                          <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                          <span className="relative z-10">Processing...</span>
+                        </>
+                      ) : (
+                        <>
+                          <span className="relative z-10">Submit Request</span>
+                          <CheckCircle className="w-6 h-6 relative z-10 group-hover:scale-110 transition-transform" />
+                        </>
+                      )}
+                      <div className="absolute inset-0 bg-gradient-to-r from-cyan-600 to-violet-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                    </button>
                   </div>
                 </div>
-              </div>
+              )}
 
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-left">
-                <p className="font-semibold text-blue-900 mb-2">
-                  📧 What happens next?
-                </p>
-                <ul className="text-sm text-blue-800 space-y-1 list-disc list-inside">
-                  <li>Your host ({form.host}) will receive an approval email</li>
-                  <li>Once approved, you'll receive a confirmation email with entry details</li>
-                  <li>Bring a valid government-issued ID on your visit date</li>
-                  <li>Show your confirmation email at the security gate</li>
-                  <li>Please arrive 10 minutes before your scheduled time</li>
-                </ul>
-              </div>
+              {/* Step 2: Confirmation */}
+              {activeStep === 2 && success && (
+                <div className="space-y-8">
+                  <div className="text-center space-y-6">
+                    <div className="relative inline-block">
+                      <div className="w-24 h-24 bg-gradient-to-br from-green-500 to-emerald-500 rounded-3xl flex items-center justify-center mx-auto shadow-2xl shadow-green-500/50">
+                        <CheckCircle className="w-14 h-14" />
+                      </div>
+                      <div className="absolute inset-0 bg-green-500 rounded-3xl blur-2xl opacity-50 animate-pulse"></div>
+                    </div>
+                    
+                    <div>
+                      <h2 className="text-5xl font-black mb-4 bg-gradient-to-r from-green-400 to-emerald-400 bg-clip-text text-transparent">
+                        Success!
+                      </h2>
+                      <p className="text-xl text-slate-400 max-w-2xl mx-auto">
+                        Your visitor request has been submitted for approval. Sit tight while we notify your host.
+                      </p>
+                    </div>
+                  </div>
 
-              <div className="flex flex-wrap justify-center gap-4">
-                <button
-                  onClick={() => window.print()}
-                  className="px-6 py-3 border border-purple-600 text-purple-600 rounded-lg font-semibold hover:bg-purple-50 transition"
-                >
-                  Print Details
-                </button>
-                <button
-                  onClick={resetForm}
-                  className="bg-purple-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-purple-700 transition"
-                >
-                  Book Another Visit
-                </button>
-              </div>
+                  <div className="p-8 bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl">
+                    <h3 className="text-2xl font-bold mb-6 flex items-center gap-2">
+                      <Info className="w-6 h-6 text-violet-400" />
+                      Booking Details
+                    </h3>
+                    <div className="grid md:grid-cols-2 gap-6">
+                      {[
+                        { label: "Request ID", value: confirmationId },
+                        { label: "Visitor Name", value: form.name },
+                        { label: "Visit Date & Time", value: new Date(`${form.date}T${form.time}`).toLocaleString() },
+                        { label: "Host", value: form.host },
+                        { label: "Entry Gate", value: gates.find((g) => g.id === form.gate)?.name },
+                        { label: "Status", value: "Pending Approval", badge: true },
+                      ].map((item, idx) => (
+                        <div key={idx} className="p-4 bg-white/5 rounded-2xl">
+                          <p className="text-sm text-slate-500 mb-1">{item.label}</p>
+                          {item.badge ? (
+                            <span className="inline-flex items-center gap-2 px-3 py-1 bg-orange-500/20 border border-orange-500/30 rounded-full text-orange-300 font-semibold">
+                              <Clock className="w-4 h-4" />
+                              {item.value}
+                            </span>
+                          ) : (
+                            <p className="font-bold text-white">{item.value}</p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="p-6 bg-gradient-to-br from-blue-500/10 to-cyan-500/10 border border-blue-500/30 rounded-3xl backdrop-blur-sm">
+                    <p className="font-bold text-blue-300 mb-4 flex items-center gap-2 text-lg">
+                      <Bell className="w-5 h-5" />
+                      What happens next?
+                    </p>
+                    <ul className="space-y-3 text-slate-300">
+                      {[
+                        `Your host (${form.host}) will receive an approval email`,
+                        "Once approved, you'll get a confirmation email with QR code",
+                        "Bring a valid government-issued ID on your visit date",
+                        "Show your QR code at the security gate for quick entry",
+                        "Please arrive 10 minutes before your scheduled time",
+                      ].map((item, idx) => (
+                        <li key={idx} className="flex items-start gap-3">
+                          <div className="w-6 h-6 bg-gradient-to-br from-violet-500 to-cyan-500 rounded-lg flex items-center justify-center shrink-0 mt-0.5">
+                            <span className="text-xs font-bold">{idx + 1}</span>
+                          </div>
+                          <span>{item}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  <div className="flex flex-wrap justify-center gap-4">
+                    <button
+                      onClick={() => window.print()}
+                      className="px-8 py-4 bg-white/5 border border-white/10 rounded-2xl font-semibold hover:bg-white/10 transition-all"
+                    >
+                      Print Details
+                    </button>
+                    <button
+                      onClick={resetForm}
+                      className="group relative px-8 py-4 bg-gradient-to-r from-violet-600 to-cyan-600 rounded-2xl font-bold hover:shadow-xl hover:shadow-violet-500/50 transition-all duration-300 overflow-hidden"
+                    >
+                      <span className="relative z-10">Book Another Visit</span>
+                      <div className="absolute inset-0 bg-gradient-to-r from-cyan-600 to-violet-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
-          )}
-        </div>
+          </div>
 
-        {/* Footer */}
-        <div className="text-center mt-8 text-gray-600 text-sm">
-          <p>
-            Need help? Contact us at{" "}
-            <a
-              href="mailto:visitors@company.com"
-              className="text-purple-600 hover:underline"
-            >
-              visitors@company.com
-            </a>{" "}
-            or call +91-1800-XXX-XXXX
-          </p>
+          {/* Footer */}
+          <div className="text-center mt-12 space-y-4">
+            <div className="flex items-center justify-center gap-6 flex-wrap">
+              <a href="mailto:visitors@company.com" className="text-slate-400 hover:text-violet-400 transition-colors flex items-center gap-2">
+                <Mail className="w-4 h-4" />
+                visitors@company.com
+              </a>
+              <span className="text-slate-700">•</span>
+              <a href="tel:+911800XXXXXX" className="text-slate-400 hover:text-violet-400 transition-colors flex items-center gap-2">
+                <Phone className="w-4 h-4" />
+                +91-1800-XXX-XXXX
+              </a>
+            </div>
+            <p className="text-slate-600 text-sm">
+              © 2025 VPASS. Powered by next-generation security technology.
+            </p>
+          </div>
         </div>
       </div>
     </div>
